@@ -7,15 +7,7 @@ assignees: ''
 
 ---
 
----
-name: "\U0001F680 Feature Name"
-about: "what the feature entails"
-labels: 'i: enhancement, i: needs triage'
-assignees: ''
-
----
-
-## Feature Proposal
+## :parrot: Feature Proposal
 
 **Is your feature request related to a problem? Please describe.**
 A clear and concise description of what the problem is. Ex. I have an issue when [...]
