@@ -15,7 +15,7 @@ A clear and concise description of what the problem is. Ex. I have an issue when
 **Describe the proposed solution**
 A clear and concise description of the solution. Add any considered drawbacks.
 
-**Possible Alternatives (if applicable) **
+**Possible Alternatives (if applicable)**
 A clear and concise description of any alternative solutions or features you've considered.
 
 **Teachability, Documentation, Adoption, Migration Strategy**
