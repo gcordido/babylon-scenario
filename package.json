@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "scripts": {
     "start": "sirv ./src public --cors --single --no-clear --port 8000",
-
     "build": "webpack"
   },
   "devDependencies": {
@@ -15,6 +14,7 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
-    "babylonjs": "^5.22.0"
+    "babylonjs": "^5.22.0",
+    "sirv": "^2.0.2"
   }
 }
