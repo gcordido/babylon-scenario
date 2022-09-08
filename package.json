@@ -13,7 +13,8 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
-    "babylonjs": "^5.22.0",
-    "sirv": "^2.0.2"
+    "@babylonjs/core": "^5.15.1",
+    "@babylonjs/gui": "^5.16.0",
+    "@babylonjs/loaders": "^5.14.1"
   }
 }
