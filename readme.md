@@ -1,12 +1,12 @@
-# Babylon End to End Scenario
+# :basketball: Babylon End to End Scenario
 
-Project currently under development. See [**Issues**](https://github.com/gcordido/babylon-scenario/issues) for upcoming features and bugs that require fixing.
+ Project currently under development. See [**Issues**](https://github.com/gcordido/babylon-scenario/issues) for upcoming features and bugs that require fixing.
 
-## Running the project locally
+## Running the project locally 
 
 To run this project locally, first clone this repository. Then run the following commands in the terminal:
 
-### Project Setup
+### Project Setup :wrench:
 ```
 npm install
 ```
