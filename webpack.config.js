@@ -3,7 +3,6 @@ const path = require('path');
 
 module.exports = {
     entry:'./app/app.ts',
-    
 
     output: {
         path: path.resolve(__dirname, 'dist'),
@@ -13,9 +12,12 @@ module.exports = {
         extensions: ['.ts', '.tsx', '.js']
     },
     mode: "development", //added to debug in the future, change to production later
-    devtool: 'source-map',
+    devtool: 'eval-cheap-source-map',
     plugins: [
-        new HtmlWebpackPlugin()
+        new HtmlWebpackPlugin({
+            title: "Babylon Scenario",
+            template: "src/index.html"
+        })
     ],
     module: {
         rules: [{
