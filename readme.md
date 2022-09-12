@@ -1,7 +1,22 @@
-# Vanilla JavaScript App
+# :basketball: Babylon End to End Scenario
 
-[Azure Static Web Apps](https://docs.microsoft.com/azure/static-web-apps/overview) allows you to easily build JavaScript apps in minutes. Use this repo with the [quickstart](https://docs.microsoft.com/azure/static-web-apps/getting-started?tabs=vanilla-javascript) to build and customize a new static site.
+ Project currently under development. See [**Issues**](https://github.com/gcordido/babylon-scenario/issues) for upcoming features and bugs that require fixing.
 
-This repo is used as a starter for a _very basic_ HTML web application using no front-end frameworks.
+## Running the project locally 
 
-This repo has a dev container. This means if you open it inside a [GitHub Codespace](https://github.com/features/codespaces), or using [VS Code with the remote containers extension](https://code.visualstudio.com/docs/remote/containers), it will be opened inside a container with all the dependencies already installed.
+To run this project locally, first clone this repository. Then run the following commands in the terminal:
+
+### Project Setup :wrench:
+```
+npm install
+```
+
+### Compiles and hot-reloads for development
+```
+npm run serve
+```
+
+### Compiles for production
+```
+npm run build
+```
