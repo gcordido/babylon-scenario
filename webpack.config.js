@@ -2,7 +2,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');
 
 module.exports = {
-    entry:'./app/app.ts',
+    entry:'./src/app.ts',
 
     output: {
         path: path.resolve(__dirname, 'dist'),
@@ -16,7 +16,7 @@ module.exports = {
     plugins: [
         new HtmlWebpackPlugin({
             title: "Babylon Scenario",
-            template: "src/index.html"
+            template: "./src/index.html"
         })
     ],
     module: {
