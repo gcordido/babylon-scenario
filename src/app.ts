@@ -14,6 +14,7 @@ import {
     ActionManager,
     ExecuteCodeAction,
     AbstractMesh,
+    PredicateCondition
 } from "@babylonjs/core";
 import "@babylonjs/loaders";
 import { AdvancedDynamicTexture, Image} from "@babylonjs/gui";
@@ -352,6 +353,40 @@ export class BasicScene {
      * @returns void
      */
     PickBall(): void{
+        
+        //shootAction: Executes the code to throw the ball if and only if the ball is currently being held.
+        const shootAction = new ExecuteCodeAction(
+            {
+                trigger: ActionManager.OnKeyDownTrigger,
+                parameter: "r"
+            },
+            () => {
+                if(this.ball){
+                    //Eliminates the ball's parent and reassigns a physics impostor to the mesh
+                    this.ball.setParent(null);
+                    if(this.ball?.physicsImpostor){this.ball.physicsImpostor.dispose();}
+                    this.ball.physicsImpostor = new PhysicsImpostor(
+                        this.ball,
+                        PhysicsImpostor.SphereImpostor,
+                        {mass: 1, restitution: 0.5, ignoreParent: true, friction: 1},
+                        this.scene
+                    );
+                    //Sends the ball in the camera's facing direction. Throw not powerful enough yet, must tweak.
+                    //Gets a forward vector from the camera, and adds it to an up vector.
+                    const forwardVector = this.camera.getDirection(Vector3.Forward());
+                    const upVector = new Vector3(0,5,0);
+                    forwardVector.scaleInPlace(7);
+                    console.log(this.ballIsHeld);
+                    //Applies an impulse in the direction of the resulting vector from the ball's absolute position.
+                    this.ball?.applyImpulse(forwardVector.add(upVector), this.ball.getAbsolutePosition());
+                }
+                this.ballIsHeld = false;
+            },
+            //Babylon condition, runs the action only if ballIsHeld is true
+            new PredicateCondition(this.scene.actionManager as ActionManager, 
+                () => {return this.ballIsHeld})   
+        );
+
         if(this.ball){
             //attaches ball mesh to camera
             this.ball.physicsImpostor?.dispose();
@@ -359,41 +394,9 @@ export class BasicScene {
             this.ball.setParent(this.camera);
             this.ball.position.y = 0;
             this.ball.position.z = 3;
-            this.ballIsHeld = true;
-    
+            
             //Add an action manager to register if a key is pressed to carry out an action after (throw ball)
-            this.scene.actionManager.registerAction(
-                new ExecuteCodeAction(
-                    {
-                        trigger: ActionManager.OnKeyDownTrigger,
-                        parameter: "r"
-                    },
-                    () => {
-                        if(this.ball){
-                            //Eliminates the ball's parent and reassigns a physics impostor to the mesh
-                            this.ball.setParent(null);
-                            if(this.ball.physicsImpostor){this.ball.physicsImpostor.dispose();}
-                            this.ball.physicsImpostor = new PhysicsImpostor(
-                                this.ball,
-                                PhysicsImpostor.SphereImpostor,
-                                {mass: 1, restitution: 0.5, ignoreParent: true, friction: 1},
-                                this.scene
-                            );
-                            //this.ball.checkCollisions = true;
-                        }
-                        //Sends the ball in the camera's facing direction. Throw not powerful enough yet, must tweak.
-                        //Gets a forward vector from the camera, and adds it to an up vector.
-                        const forwardVector = this.camera.getDirection(Vector3.Forward());
-                        const upVector = new Vector3(0,5,0);
-                        forwardVector.scaleInPlace(7);
-                        
-                        //Applies an impulse in the direction of the resulting vector from the ball's absolute position.
-                        this.ball?.applyImpulse(forwardVector.add(upVector), this.ball.getAbsolutePosition());
-                        this.ballIsHeld = false;
-                        return;
-                    }
-                )
-            )
+            this.scene.actionManager.registerAction(shootAction)
         }
         return;
     
