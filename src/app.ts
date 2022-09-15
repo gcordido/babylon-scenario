@@ -186,7 +186,7 @@ export class BasicScene {
         //In order to properly work with the mesh, we select the next element which actually does represent the mesh itself.
         const ball = models.meshes[1];
         ball.position = new Vector3(0,6,1.25);
-        ball.scaling.scaleInPlace(.02);
+        ball.scaling.scaleInPlace(.025);
     
         ball.physicsImpostor = new PhysicsImpostor(
             ball,
@@ -316,6 +316,23 @@ export class BasicScene {
         const postLimiter02 = postLimiter.clone();
         postLimiter02.position.z = -12;
         
+
+        //Hoop Basket
+        const hoopRing = MeshBuilder.CreateTorus("ring", {thickness: 0.05, diameter: 0.75});
+        hoopRing.position.z = 10.95;
+        hoopRing.position.y = 4.07;
+        hoopRing.position.x = -0.05;
+        hoopRing.isVisible = false;
+
+        hoopRing.physicsImpostor = new PhysicsImpostor(
+            hoopRing,
+            PhysicsImpostor.MeshImpostor
+        );
+
+        const hoopRing02 = hoopRing.clone();
+        hoopRing02.position.z = -10.95;
+        hoopRing02.position.x = 0.04;
+        
     }
 
     CreateIndicator(): Image{
@@ -377,6 +394,7 @@ export class BasicScene {
                     const upVector = new Vector3(0,5,0);
                     forwardVector.scaleInPlace(7);
                     console.log(this.ballIsHeld);
+
                     //Applies an impulse in the direction of the resulting vector from the ball's absolute position.
                     this.ball?.applyImpulse(forwardVector.add(upVector), this.ball.getAbsolutePosition());
                 }
@@ -400,6 +418,15 @@ export class BasicScene {
         }
         return;
     
+    }
+    /**
+     * Point detection function. 
+     * - Detects when points have been scored (basket has been made).
+     * - Determines the amount of points from player position at throwing.
+     */
+    PointDetection(): void{
+
+
     }
 
 }
