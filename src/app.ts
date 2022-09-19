@@ -115,6 +115,17 @@ export class BasicScene {
             else target.isVisible = false;
         }
 
+        const pointSphere = MeshBuilder.CreateSphere("pointsHere", {diameter: 0.05});
+        pointSphere.position.z = 10.95;
+        pointSphere.position.y = 4.07;
+        pointSphere.position.x = -0.05;
+
+        //TEST: Testing for intersection via Mesh intersection
+        //console.log(this.ball?.intersectsMesh(pointSphere), {precise: true});
+
+        //TEST: Testing for intersection via Point intersection
+        //if(this.ball?.intersectsPoint(new Vector3(10.95, 4.07, -0.05))) console.log(true);
+
         return scene;
     }
     /** CreateController method
@@ -196,6 +207,8 @@ export class BasicScene {
         );
     
         ball.actionManager = new ActionManager(this.scene);
+
+        ball.showBoundingBox = true;
     
         return ball;
     
@@ -393,7 +406,7 @@ export class BasicScene {
                     const forwardVector = this.camera.getDirection(Vector3.Forward());
                     const upVector = new Vector3(0,5,0);
                     forwardVector.scaleInPlace(7);
-                    console.log(this.ballIsHeld);
+                    //console.log(this.ballIsHeld);
 
                     //Applies an impulse in the direction of the resulting vector from the ball's absolute position.
                     this.ball?.applyImpulse(forwardVector.add(upVector), this.ball.getAbsolutePosition());
