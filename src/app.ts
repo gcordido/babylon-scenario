@@ -110,7 +110,6 @@ export class BasicScene {
             //Create function for boolean value
             if(this.BallCheck() && !this.ballIsHeld){
                 target.isVisible = true;
-                console.log("target shows up");
             }
             else target.isVisible = false;
         }
@@ -119,6 +118,20 @@ export class BasicScene {
         pointSphere.position.z = 10.95;
         pointSphere.position.y = 4.07;
         pointSphere.position.x = -0.05;
+
+        //TEST: Testing intersection via Action Trigger
+        // const pointDetection = new ExecuteCodeAction(
+        //     {
+        //         trigger: ActionManager.OnIntersectionEnterTrigger,
+        //         parameter: {
+        //             mesh: pointSphere,
+        //             usePreciseIntersection: true
+        //         }
+        //     },
+        //     () => {
+        //         console.log("point detected");
+        //     }
+        // );
 
         //TEST: Testing for intersection via Mesh intersection
         //console.log(this.ball?.intersectsMesh(pointSphere), {precise: true});
