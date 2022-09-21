@@ -14,10 +14,11 @@ import {
     ActionManager,
     ExecuteCodeAction,
     AbstractMesh,
-    PredicateCondition
+    PredicateCondition,
+    KeyboardEventTypes
 } from "@babylonjs/core";
 import "@babylonjs/loaders";
-import { AdvancedDynamicTexture, Image} from "@babylonjs/gui";
+import { AdvancedDynamicTexture, Image, TextBlock} from "@babylonjs/gui";
 import * as CANNON from "cannon";
 
 /*Declares and exports the BasicScene class, which initializes both the Babylon Scene and the Babylon Engine */
@@ -86,7 +87,6 @@ export class BasicScene {
 
         //Grabbing indicator
         const target = this.CreateIndicator(); 
-
 
         /*Stars the first onPointerDown instance to get into the game.
             - The first click will lock the pointer for the camera to pan around.
@@ -354,10 +354,30 @@ export class BasicScene {
      */
     PickBall(): void{
         
+        if(this.ball){
+            //attaches ball mesh to camera
+            this.ball.physicsImpostor?.dispose();
+            this.ball.physicsImpostor = null;
+            this.ball.setParent(this.camera);
+            this.ball.position.y = 0;
+            this.ball.position.z = 3;
+            
+            this.ThrowBall();
+
+        }
+        return;
+    
+    }
+
+    ThrowBall(): void {
+
+        let count = 0;
+        let t = 0;;
+
         //shootAction: Executes the code to throw the ball if and only if the ball is currently being held.
         const shootAction = new ExecuteCodeAction(
             {
-                trigger: ActionManager.OnKeyDownTrigger,
+                trigger: ActionManager.OnKeyUpTrigger,
                 parameter: "r"
             },
             () => {
@@ -375,7 +395,7 @@ export class BasicScene {
                     //Gets a forward vector from the camera, and adds it to an up vector.
                     const forwardVector = this.camera.getDirection(Vector3.Forward());
                     const upVector = new Vector3(0,5,0);
-                    forwardVector.scaleInPlace(7);
+                    forwardVector.scaleInPlace(t);
                     console.log(this.ballIsHeld);
                     //Applies an impulse in the direction of the resulting vector from the ball's absolute position.
                     this.ball?.applyImpulse(forwardVector.add(upVector), this.ball.getAbsolutePosition());
@@ -387,20 +407,39 @@ export class BasicScene {
                 () => {return this.ballIsHeld})   
         );
 
-        if(this.ball){
-            //attaches ball mesh to camera
-            this.ball.physicsImpostor?.dispose();
-            this.ball.physicsImpostor = null;
-            this.ball.setParent(this.camera);
-            this.ball.position.y = 0;
-            this.ball.position.z = 3;
-            
-            //Add an action manager to register if a key is pressed to carry out an action after (throw ball)
-            this.scene.actionManager.registerAction(shootAction)
-        }
-        return;
-    
+        let power = new TextBlock();
+        let advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+        this.scene.onKeyboardObservable.add((kbInfo) => {
+            switch(kbInfo.type) {
+                case KeyboardEventTypes.KEYDOWN:
+                    if(kbInfo.event.key === "r" && count < 60) {
+                        count += 1;
+                        console.log(count);
+                        power.text = count.toString();
+                        advancedTexture.addControl(power);
+                    }
+                    break;
+                case KeyboardEventTypes.KEYUP:
+                    if(kbInfo.event.key === "r"){
+                        console.log("throw finished");
+                        console.log(count);
+                        count = count / 30;
+                        console.log(count);
+                        t = Math.pow(2, (count * 2));
+                        this.scene.actionManager.registerAction(shootAction);
+                        count = 0;
+                    }
+                    break;
+            }
+        })
+
+
     }
+
+
+
+
 
 }
 
