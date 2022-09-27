@@ -18,7 +18,7 @@ import {
     KeyboardEventTypes
 } from "@babylonjs/core";
 import "@babylonjs/loaders";
-import { AdvancedDynamicTexture, Image, TextBlock} from "@babylonjs/gui";
+import { AdvancedDynamicTexture, Image, Control, TextBlock} from "@babylonjs/gui";
 import * as CANNON from "cannon";
 
 /*Declares and exports the BasicScene class, which initializes both the Babylon Scene and the Babylon Engine */
@@ -366,7 +366,6 @@ export class BasicScene {
 
         }
         return;
-    
     }
 
     ThrowBall(): void {
@@ -408,32 +407,42 @@ export class BasicScene {
         );
 
         let power = new TextBlock();
-        let advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
+        let advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
+        const style = advancedTexture.createStyle();
+        style.fontSize = 45;
+        
+        power.style = style;
+
+        //Keyboard Event Observable for when shooting key is pressed. Starts power gauge until key is released
         this.scene.onKeyboardObservable.add((kbInfo) => {
             switch(kbInfo.type) {
                 case KeyboardEventTypes.KEYDOWN:
-                    if(kbInfo.event.key === "r" && count < 60) {
+                    if(kbInfo.event.key === "r" && count < 60 && this.ballIsHeld) {
                         count += 1;
-                        console.log(count);
                         power.text = count.toString();
+                        power.color = "white";
+                        //WIP: Currently shows the power gauge number rather than the proper visual.
                         advancedTexture.addControl(power);
+                        //Placement for visual
+                        power.left = -1000;
+                        power.top = 500;
                     }
                     break;
                 case KeyboardEventTypes.KEYUP:
                     if(kbInfo.event.key === "r"){
                         console.log("throw finished");
-                        console.log(count);
                         count = count / 30;
-                        console.log(count);
+                        //Throwing Value (t) is determined as f(count) = 2^(2count). Used as a scalar in the vector function to throw.
                         t = Math.pow(2, (count * 2));
                         this.scene.actionManager.registerAction(shootAction);
                         count = 0;
+                        advancedTexture.removeControl(power);
                     }
                     break;
             }
         })
-
+        
 
     }
 
