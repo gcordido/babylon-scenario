@@ -87,6 +87,31 @@ export class BasicScene {
         //Grabbing indicator
         const target = this.CreateIndicator(); 
 
+        const pointCollider = MeshBuilder.CreateSphere("pointCollider", {diameter: 0.5});
+        pointCollider.isVisible = false;
+
+        const pointSphere = MeshBuilder.CreateSphere("pointsHere", {diameter: 0.08});
+        pointSphere.position.z = 10.95;
+        pointSphere.position.y = 4.07;
+        pointSphere.position.x = -0.05;
+
+
+        //TEST: Testing intersection via Action Trigger
+        const pointDetection = new ExecuteCodeAction(
+            {
+                trigger: ActionManager.OnIntersectionEnterTrigger,
+                parameter: {
+                    mesh: pointSphere,
+                }
+            },
+            (evt) => {
+                console.log("point detected");
+            }
+        );
+        
+        pointCollider.actionManager = new ActionManager(scene);
+        pointCollider.actionManager.registerAction(pointDetection);
+
 
         /*Stars the first onPointerDown instance to get into the game.
             - The first click will lock the pointer for the camera to pan around.
@@ -96,6 +121,7 @@ export class BasicScene {
             if(evt.button === 0) this.engine.enterPointerlock();
             if(evt.button === 1) this.engine.exitPointerlock();
             if(this.BallCheck()){
+                if(this.ball) pointCollider.parent = this.ball;
                 target.isVisible = false;
                 this.ballIsHeld = true;
                 this.PickBall();
@@ -114,24 +140,11 @@ export class BasicScene {
             else target.isVisible = false;
         }
 
-        const pointSphere = MeshBuilder.CreateSphere("pointsHere", {diameter: 0.05});
-        pointSphere.position.z = 10.95;
-        pointSphere.position.y = 4.07;
-        pointSphere.position.x = -0.05;
 
-        //TEST: Testing intersection via Action Trigger
-        // const pointDetection = new ExecuteCodeAction(
-        //     {
-        //         trigger: ActionManager.OnIntersectionEnterTrigger,
-        //         parameter: {
-        //             mesh: pointSphere,
-        //             usePreciseIntersection: true
-        //         }
-        //     },
-        //     () => {
-        //         console.log("point detected");
-        //     }
-        // );
+
+
+
+
 
         //TEST: Testing for intersection via Mesh intersection
         //console.log(this.ball?.intersectsMesh(pointSphere), {precise: true});
