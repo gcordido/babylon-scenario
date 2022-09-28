@@ -27,6 +27,7 @@ export class BasicScene {
     camera: FreeCamera;
     ball?:AbstractMesh;
     ballIsHeld:boolean;
+    points: number;
     
     constructor(){
         const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
@@ -35,6 +36,7 @@ export class BasicScene {
         this.camera = this.CreateController();
         this.CreateBall().then(ball => {this.ball = ball});
         this.ballIsHeld = false;
+        this.points = 0;
 
         this.engine.runRenderLoop(()=>{
             this.scene.render();
@@ -86,32 +88,7 @@ export class BasicScene {
 
         //Grabbing indicator
         const target = this.CreateIndicator(); 
-
-        const pointCollider = MeshBuilder.CreateSphere("pointCollider", {diameter: 0.5});
-        pointCollider.isVisible = false;
-
-        const pointSphere = MeshBuilder.CreateSphere("pointsHere", {diameter: 0.08});
-        pointSphere.position.z = 10.95;
-        pointSphere.position.y = 4.07;
-        pointSphere.position.x = -0.05;
-
-
-        //TEST: Testing intersection via Action Trigger
-        const pointDetection = new ExecuteCodeAction(
-            {
-                trigger: ActionManager.OnIntersectionEnterTrigger,
-                parameter: {
-                    mesh: pointSphere,
-                }
-            },
-            (evt) => {
-                console.log("point detected");
-            }
-        );
         
-        pointCollider.actionManager = new ActionManager(scene);
-        pointCollider.actionManager.registerAction(pointDetection);
-
 
         /*Stars the first onPointerDown instance to get into the game.
             - The first click will lock the pointer for the camera to pan around.
@@ -121,13 +98,14 @@ export class BasicScene {
             if(evt.button === 0) this.engine.enterPointerlock();
             if(evt.button === 1) this.engine.exitPointerlock();
             if(this.BallCheck()){
-                if(this.ball) pointCollider.parent = this.ball;
                 target.isVisible = false;
                 this.ballIsHeld = true;
                 this.PickBall();
+                this.PointDetection();
             }
         }
         
+
         /*Starts an onPointMove instance to detect the ball.
         - Showcases the target if the ball is being detected by the camera's forward ray
         - Calls the BallCheck() method
@@ -464,7 +442,31 @@ export class BasicScene {
      * - Determines the amount of points from player position at throwing.
      */
     PointDetection(): void{
+        const pointCollider = MeshBuilder.CreateSphere("pointCollider", {diameter: 0.08});
+        pointCollider.isVisible = false;
+        const pointSphere = MeshBuilder.CreateSphere("pointsHere", {diameter: 0.08});
+        pointSphere.position.z = 10.95;
+        pointSphere.position.y = 4.07;
+        pointSphere.position.x = -0.05;
+        pointSphere.isVisible = false;
 
+        //TEST: Testing intersection via Action Trigger
+        const pointDetection = new ExecuteCodeAction(
+            {
+                trigger: ActionManager.OnIntersectionEnterTrigger,
+                parameter: {
+                    mesh: pointSphere
+                }
+            },
+            (evt) => {
+                this.points += 2;
+            }
+        );
+        
+        pointCollider.actionManager = new ActionManager(this.scene);
+        pointCollider.actionManager.registerAction(pointDetection);
+
+        if(this.ball) pointCollider.parent = this.ball;
 
     }
 
