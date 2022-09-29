@@ -88,7 +88,6 @@ export class BasicScene {
 
         //Grabbing indicator
         const target = this.CreateIndicator(); 
-        
 
         /*Stars the first onPointerDown instance to get into the game.
             - The first click will lock the pointer for the camera to pan around.
@@ -104,7 +103,6 @@ export class BasicScene {
                 this.PointDetection();
             }
         }
-        
 
         /*Starts an onPointMove instance to detect the ball.
         - Showcases the target if the ball is being detected by the camera's forward ray
@@ -117,12 +115,6 @@ export class BasicScene {
             }
             else target.isVisible = false;
         }
-
-
-
-
-
-
 
         //TEST: Testing for intersection via Mesh intersection
         //console.log(this.ball?.intersectsMesh(pointSphere), {precise: true});
@@ -467,7 +459,6 @@ export class BasicScene {
         pointCollider.actionManager.registerAction(pointDetection);
 
         if(this.ball) pointCollider.parent = this.ball;
-
     }
 
 }
