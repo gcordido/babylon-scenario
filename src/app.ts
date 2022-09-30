@@ -451,7 +451,12 @@ export class BasicScene {
                 }
             },
             (evt) => {
-                this.points += 2;
+                //linear velocity of physics impostor
+                if(this.ball){
+                    const linearVelocity = this.ball.physicsImpostor?.getLinearVelocity();
+                    if(linearVelocity && linearVelocity.y < 0) this.points += 2;
+                } 
+
             }
         );
         
