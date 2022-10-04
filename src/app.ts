@@ -28,6 +28,9 @@ export class BasicScene {
     camera: FreeCamera;
     ball?:AbstractMesh;
     ballIsHeld:boolean;
+    points: number;
+    pointCount: TextBlock;
+    shootPoint: boolean;
     
     constructor(){
         const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
@@ -36,6 +39,9 @@ export class BasicScene {
         this.camera = this.CreateController();
         this.CreateBall().then(ball => {this.ball = ball});
         this.ballIsHeld = false;
+        this.points = 0;
+        this.pointCount = new TextBlock();
+        this.shootPoint = false;
 
         this.engine.runRenderLoop(()=>{
             this.scene.render();
@@ -88,6 +94,25 @@ export class BasicScene {
         //Grabbing indicator
         const target = this.CreateIndicator(); 
 
+        let screenUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+        //Creates UI element for points
+        let pointCount = new TextBlock();
+        pointCount.name = "points count";
+        pointCount.textVerticalAlignment = TextBlock.VERTICAL_ALIGNMENT_CENTER;
+        pointCount.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
+        pointCount.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        pointCount.fontSize = "45px";
+        pointCount.color = "white";
+        pointCount.text = "Points: 0";
+        pointCount.top = "32px";
+        pointCount.left = "-64px";
+        pointCount.width = "25%";
+        pointCount.fontFamily = "Helvetica";
+        pointCount.resizeToFit = true;
+        //Adds Points elements to the screen UI
+        screenUI.addControl(pointCount);
+
         /*Stars the first onPointerDown instance to get into the game.
             - The first click will lock the pointer for the camera to pan around.
             - Then checks if the ball is in front of the camera, a click will grab it.
@@ -98,10 +123,12 @@ export class BasicScene {
             if(this.BallCheck()){
                 target.isVisible = false;
                 this.ballIsHeld = true;
+                this.shootPoint = false;
                 this.PickBall();
+                this.PointDetection();
             }
         }
-        
+
         /*Starts an onPointMove instance to detect the ball.
         - Showcases the target if the ball is being detected by the camera's forward ray
         - Calls the BallCheck() method
@@ -110,10 +137,16 @@ export class BasicScene {
             //Create function for boolean value
             if(this.BallCheck() && !this.ballIsHeld){
                 target.isVisible = true;
-                console.log("target shows up");
             }
             else target.isVisible = false;
         }
+
+        //Game Loop to update points
+        scene.onBeforeRenderObservable.add(() => {
+            pointCount = this.updatePoints(pointCount);
+            this.pointCount = pointCount;
+        })
+
 
         return scene;
     }
@@ -186,7 +219,7 @@ export class BasicScene {
         //In order to properly work with the mesh, we select the next element which actually does represent the mesh itself.
         const ball = models.meshes[1];
         ball.position = new Vector3(0,6,1.25);
-        ball.scaling.scaleInPlace(.02);
+        ball.scaling.scaleInPlace(.025);
     
         ball.physicsImpostor = new PhysicsImpostor(
             ball,
@@ -196,6 +229,8 @@ export class BasicScene {
         );
     
         ball.actionManager = new ActionManager(this.scene);
+
+        ball.showBoundingBox = true;
     
         return ball;
     
@@ -316,6 +351,23 @@ export class BasicScene {
         const postLimiter02 = postLimiter.clone();
         postLimiter02.position.z = -12;
         
+
+        //Hoop Basket
+        const hoopRing = MeshBuilder.CreateTorus("ring", {thickness: 0.05, diameter: 0.75});
+        hoopRing.position.z = 10.95;
+        hoopRing.position.y = 4.07;
+        hoopRing.position.x = -0.05;
+        hoopRing.isVisible = false;
+
+        hoopRing.physicsImpostor = new PhysicsImpostor(
+            hoopRing,
+            PhysicsImpostor.MeshImpostor
+        );
+
+        const hoopRing02 = hoopRing.clone();
+        hoopRing02.position.z = -10.95;
+        hoopRing02.position.x = 0.04;
+        
     }
 
     CreateIndicator(): Image{
@@ -395,7 +447,8 @@ export class BasicScene {
                     const forwardVector = this.camera.getDirection(Vector3.Forward());
                     const upVector = new Vector3(0,5,0);
                     forwardVector.scaleInPlace(t);
-                    console.log(this.ballIsHeld);
+                    //console.log(this.ballIsHeld);
+
                     //Applies an impulse in the direction of the resulting vector from the ball's absolute position.
                     this.ball?.applyImpulse(forwardVector.add(upVector), this.ball.getAbsolutePosition());
                 }
@@ -444,6 +497,56 @@ export class BasicScene {
         })
         
 
+    }
+    /**
+     * Point detection function. 
+     * - Detects when points have been scored (basket has been made).
+     * - Determines the amount of points from player position at throwing.
+     */
+    PointDetection(): void{
+        const pointCollider = MeshBuilder.CreateSphere("pointCollider", {diameter: 0.08});
+        pointCollider.isVisible = false;
+        const pointSphere = MeshBuilder.CreateSphere("pointsHere", {diameter: 0.08});
+        pointSphere.position.z = 10.95;
+        pointSphere.position.y = 4.07;
+        pointSphere.position.x = -0.05;
+        pointSphere.isVisible = false;
+
+        //TEST: Testing intersection via Action Trigger
+        const pointDetection = new ExecuteCodeAction(
+            {
+                trigger: ActionManager.OnIntersectionEnterTrigger,
+                parameter: {
+                    mesh: pointSphere
+                }
+            },
+            (evt) => {
+                //Checks if the ball's trajectory is valid. (Points don't count if the ball is shot from below the ring)
+                if(this.ball){
+                    const linearVelocity = this.ball.physicsImpostor?.getLinearVelocity();
+                    if(linearVelocity && linearVelocity.y < 0) {
+                        this.points += 2;
+                        //Ensures that points are not counted more than once.
+                        this.shootPoint = true;
+                    }
+                } 
+
+            },
+            //Condition to check that points were not already counted.
+            //Fixes a bug where the intersection event is triggered repeatedly.
+            new PredicateCondition(this.scene.actionManager as ActionManager, 
+                () => {return !this.shootPoint}) 
+        );
+        
+        pointCollider.actionManager = new ActionManager(this.scene);
+        pointCollider.actionManager.registerAction(pointDetection);
+
+        if(this.ball) pointCollider.parent = this.ball;
+    }
+    //Updates the points text block
+    updatePoints(pointCount: TextBlock): TextBlock{
+        pointCount.text = "Points: " + this.points;
+        return pointCount;
     }
 
 
