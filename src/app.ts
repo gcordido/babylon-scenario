@@ -17,7 +17,7 @@ import {
     PredicateCondition
 } from "@babylonjs/core";
 import "@babylonjs/loaders";
-import { AdvancedDynamicTexture, Image} from "@babylonjs/gui";
+import { AdvancedDynamicTexture, Image, Control, TextBlock} from "@babylonjs/gui";
 import * as CANNON from "cannon";
 
 /*Declares and exports the BasicScene class, which initializes both the Babylon Scene and the Babylon Engine */
@@ -28,6 +28,8 @@ export class BasicScene {
     ball?:AbstractMesh;
     ballIsHeld:boolean;
     points: number;
+    pointCount: TextBlock;
+    shootPoint: boolean;
     
     constructor(){
         const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
@@ -37,6 +39,8 @@ export class BasicScene {
         this.CreateBall().then(ball => {this.ball = ball});
         this.ballIsHeld = false;
         this.points = 0;
+        this.pointCount = new TextBlock();
+        this.shootPoint = false;
 
         this.engine.runRenderLoop(()=>{
             this.scene.render();
@@ -89,6 +93,25 @@ export class BasicScene {
         //Grabbing indicator
         const target = this.CreateIndicator(); 
 
+        let screenUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+        //Creates UI element for points
+        let pointCount = new TextBlock();
+        pointCount.name = "points count";
+        pointCount.textVerticalAlignment = TextBlock.VERTICAL_ALIGNMENT_CENTER;
+        pointCount.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
+        pointCount.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        pointCount.fontSize = "45px";
+        pointCount.color = "white";
+        pointCount.text = "Points: 0";
+        pointCount.top = "32px";
+        pointCount.left = "-64px";
+        pointCount.width = "25%";
+        pointCount.fontFamily = "Helvetica";
+        pointCount.resizeToFit = true;
+        //Adds Points elements to the screen UI
+        screenUI.addControl(pointCount);
+
         /*Stars the first onPointerDown instance to get into the game.
             - The first click will lock the pointer for the camera to pan around.
             - Then checks if the ball is in front of the camera, a click will grab it.
@@ -99,6 +122,7 @@ export class BasicScene {
             if(this.BallCheck()){
                 target.isVisible = false;
                 this.ballIsHeld = true;
+                this.shootPoint = false;
                 this.PickBall();
                 this.PointDetection();
             }
@@ -116,11 +140,12 @@ export class BasicScene {
             else target.isVisible = false;
         }
 
-        //TEST: Testing for intersection via Mesh intersection
-        //console.log(this.ball?.intersectsMesh(pointSphere), {precise: true});
+        //Game Loop to update points
+        scene.onBeforeRenderObservable.add(() => {
+            pointCount = this.updatePoints(pointCount);
+            this.pointCount = pointCount;
+        })
 
-        //TEST: Testing for intersection via Point intersection
-        //if(this.ball?.intersectsPoint(new Vector3(10.95, 4.07, -0.05))) console.log(true);
 
         return scene;
     }
@@ -451,19 +476,32 @@ export class BasicScene {
                 }
             },
             (evt) => {
-                //linear velocity of physics impostor
+                //Checks if the ball's trajectory is valid. (Points don't count if the ball is shot from below the ring)
                 if(this.ball){
                     const linearVelocity = this.ball.physicsImpostor?.getLinearVelocity();
-                    if(linearVelocity && linearVelocity.y < 0) this.points += 2;
+                    if(linearVelocity && linearVelocity.y < 0) {
+                        this.points += 2;
+                        //Ensures that points are not counted more than once.
+                        this.shootPoint = true;
+                    }
                 } 
 
-            }
+            },
+            //Condition to check that points were not already counted.
+            //Fixes a bug where the intersection event is triggered repeatedly.
+            new PredicateCondition(this.scene.actionManager as ActionManager, 
+                () => {return !this.shootPoint}) 
         );
         
         pointCollider.actionManager = new ActionManager(this.scene);
         pointCollider.actionManager.registerAction(pointDetection);
 
         if(this.ball) pointCollider.parent = this.ball;
+    }
+    //Updates the points text block
+    updatePoints(pointCount: TextBlock): TextBlock{
+        pointCount.text = "Points: " + this.points;
+        return pointCount;
     }
 
 }
