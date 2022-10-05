@@ -15,7 +15,7 @@ import {
     ExecuteCodeAction,
     AbstractMesh,
     PredicateCondition,
-    KeyboardEventTypes
+    KeyboardEventTypes,
 } from "@babylonjs/core";
 import "@babylonjs/loaders";
 import { AdvancedDynamicTexture, Image, Control, TextBlock} from "@babylonjs/gui";
@@ -93,9 +93,10 @@ export class BasicScene {
 
         //Grabbing indicator
         const target = this.CreateIndicator(); 
-
+        const aimPoint = this.CreatePointer();
         let screenUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
-
+        screenUI.addControl(target);
+        screenUI.addControl(aimPoint);
         //Creates UI element for points
         let pointCount = new TextBlock();
         pointCount.name = "points count";
@@ -373,8 +374,8 @@ export class BasicScene {
         target.stretch = Image.STRETCH_UNIFORM;
         target.width = "20%"
         target.height = "20%"
-        const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("FullscreenUI");
-        advancedTexture.addControl(target);
+        // const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("FullscreenUI");
+        // advancedTexture.addControl(target);
         
         return target;
     }
@@ -547,7 +548,14 @@ export class BasicScene {
         return pointCount;
     }
 
-
+    CreatePointer(): TextBlock{
+        let target = new TextBlock();
+        target.fontSize = 42;
+        target.color = "white";
+        target.text = ".";
+        
+        return target;
+    }
 
 
 
