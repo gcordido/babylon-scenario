@@ -229,8 +229,6 @@ export class BasicScene {
         );
     
         ball.actionManager = new ActionManager(this.scene);
-
-        ball.showBoundingBox = true;
     
         return ball;
     
@@ -401,7 +399,7 @@ export class BasicScene {
     /** PickBall method
      *  - Sets the camera as the ball mesh's parent (attaches) and resets the ball to a visible position in front of the camera
      *  - Disposes the physics impostor to avoid collision errors
-     *  - Detects if a launch key is pressed ("r"), and throws the ball forward.
+     *  - Detects if a launch key is pressed (" "), and throws the ball forward.
      * @returns void
      */
     PickBall(): void{
@@ -429,7 +427,7 @@ export class BasicScene {
         const shootAction = new ExecuteCodeAction(
             {
                 trigger: ActionManager.OnKeyUpTrigger,
-                parameter: "r"
+                parameter: " "
             },
             () => {
                 if(this.ball){
@@ -471,7 +469,7 @@ export class BasicScene {
         this.scene.onKeyboardObservable.add((kbInfo) => {
             switch(kbInfo.type) {
                 case KeyboardEventTypes.KEYDOWN:
-                    if(kbInfo.event.key === "r" && count < 60 && this.ballIsHeld) {
+                    if(kbInfo.event.key === " " && count < 60 && this.ballIsHeld) {
                         count += 1;
                         power.text = count.toString();
                         power.color = "white";
@@ -483,7 +481,7 @@ export class BasicScene {
                     }
                     break;
                 case KeyboardEventTypes.KEYUP:
-                    if(kbInfo.event.key === "r"){
+                    if(kbInfo.event.key === " "){
                         console.log("throw finished");
                         count = count / 30;
                         //Throwing Value (t) is determined as f(count) = 2^(2count). Used as a scalar in the vector function to throw.
