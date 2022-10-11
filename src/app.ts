@@ -22,7 +22,7 @@ import { AdvancedDynamicTexture, Image, Control, TextBlock} from "@babylonjs/gui
 import * as CANNON from "cannon";
 
 /*Declares and exports the BasicScene class, which initializes both the Babylon Scene and the Babylon Engine */
-export class BasicScene {
+export class BasketballGame {
     scene: Scene;
     engine: Engine;
     camera: FreeCamera;
@@ -553,4 +553,4 @@ export class BasicScene {
 
 }
 
-new BasicScene();
+// new BasicScene();
