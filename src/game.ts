@@ -30,7 +30,7 @@ class Game {
     }
 
     private async main(): Promise<void> {
-        await this._goToStart();
+        await this.goToMainMenu();
 
         this._engine.runRenderLoop(() => {
             switch(this._state) {
@@ -41,7 +41,7 @@ class Game {
                     this._scene.render();
                     break;
                 case State.GAME:
-                    this._scene.render();
+                    // this._scene.render();
 
                     //Condition based on timer to be added here.
                     break;
@@ -53,7 +53,7 @@ class Game {
         });
     }
 
-    private async _goToStart(){
+    private async goToMainMenu(){
         this._engine.displayLoadingUI();
 
         this._scene.detachControl();
@@ -64,7 +64,7 @@ class Game {
 
         const MainMenu = AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene);
         MainMenu.idealHeight = 1920;
-
+        //Image link to be changed for direct asset.
         const backgroundImg = new Image("",  "https://i.imgur.com/noHjjmi.png");
         backgroundImg.stretch = Image.STRETCH_FILL;
         MainMenu.addControl(backgroundImg);
@@ -85,7 +85,7 @@ class Game {
         MainMenu.addControl(playButton);
 
         playButton.onPointerUpObservable.add(() => {
-            this._goToGame();
+            this.goToGame();
             scene.detachControl();
         })
 
@@ -105,7 +105,7 @@ class Game {
         MainMenu.addControl(instButton);
 
         instButton.onPointerUpObservable.add(() => {
-            this._goToInstructions();
+            this.goToInstructions();
             scene.detachControl();
         })
 
@@ -116,7 +116,7 @@ class Game {
         this._state = State.START;
     }
 
-    private async _goToGame(): Promise<void> {
+    private async goToGame(): Promise<void> {
         this._scene.detachControl();
         this._gameScene = new BasketballGame();
 
@@ -128,7 +128,7 @@ class Game {
         this._scene.attachControl();
     }
 
-    private async _goToInstructions(): Promise<void>{
+    private async goToInstructions(): Promise<void>{
         this._scene.detachControl();
 
         this._instructionScene = new Scene(this._engine);
@@ -239,7 +239,7 @@ class Game {
         instUI.addControl(buttonMain);
 
         buttonMain.onPointerUpObservable.add(() =>{
-            this._goToStart();
+            this.goToMainMenu();
         });
 
         const playButton = Button.CreateSimpleButton("playButton", "Play");
@@ -258,7 +258,7 @@ class Game {
         instUI.addControl(playButton);
 
         playButton.onPointerUpObservable.add(() => {
-            this._goToGame();
+            this.goToGame();
         })
 
         await this._instructionScene.whenReadyAsync();
