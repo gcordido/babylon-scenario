@@ -463,12 +463,14 @@ export class BasicScene {
         let powerBar = this.CreatePowerBar();
         powerBar.left = "-30%";
         powerBar.top = "25%";
+        powerBar.cornerRadius = 40;
         let insideBar = new Rectangle();
         insideBar.parent = powerBar;
+        insideBar.cornerRadius = 40;
         advancedTexture.addControl(insideBar);
         advancedTexture.addControl(powerBar);
         powerBar.isVisible = false;
-        // insideBar.isVisible = false;
+
 
 
 
