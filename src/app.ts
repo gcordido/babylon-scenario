@@ -19,8 +19,7 @@ import {
     KeyboardEventTypes
 } from "@babylonjs/core";
 import "@babylonjs/loaders";
-import { AdvancedDynamicTexture, Image, StackPanel, TextBlock, Control } from "@babylonjs/gui";
-
+import { AdvancedDynamicTexture, Image, StackPanel, TextBlock, Control, Rectangle } from "@babylonjs/gui";
 import * as CANNON from "cannon";
 
 // session timer
@@ -463,7 +462,8 @@ export class BasicScene {
     /** PickBall method
      *  - Sets the camera as the ball mesh's parent (attaches) and resets the ball to a visible position in front of the camera
      *  - Disposes the physics impostor to avoid collision errors
-     *  - Detects if a launch key is pressed (" "), and throws the ball forward.
+     *  - Detects if a launch key is pressed (spacebar), and throws the ball forward.
+
      * @returns void
      */
     PickBall(): void{
@@ -524,24 +524,40 @@ export class BasicScene {
         let power = new TextBlock();
 
         let advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
-        const style = advancedTexture.createStyle();
-        style.fontSize = 45;
-        
-        power.style = style;
+        let powerBar = this.CreatePowerBar();
+        powerBar.left = "-30%";
+        powerBar.top = "25%";
+        powerBar.cornerRadius = 40;
+        let insideBar = new Rectangle();
+        insideBar.parent = powerBar;
+        insideBar.cornerRadius = 40;
+        advancedTexture.addControl(insideBar);
+        advancedTexture.addControl(powerBar);
+        powerBar.isVisible = false;
+
+
+
 
         //Keyboard Event Observable for when shooting key is pressed. Starts power gauge until key is released
         this.scene.onKeyboardObservable.add((kbInfo) => {
             switch(kbInfo.type) {
                 case KeyboardEventTypes.KEYDOWN:
                     if(kbInfo.event.key === " " && count < 60 && this.ballIsHeld) {
+                        powerBar.isVisible = true;
                         count += 1;
-                        power.text = count.toString();
-                        power.color = "white";
-                        //WIP: Currently shows the power gauge number rather than the proper visual.
-                        advancedTexture.addControl(power);
+                        let width = count * 5;
+
+                        insideBar.width = width + "px";
+                        insideBar.height = "38px";
+                        insideBar.background = "green";
+                        insideBar.color = "green";
+                        insideBar.thickness = 4;
+                        // power.text = count.toString();
+
                         //Placement for visual
-                        power.left = -1000;
-                        power.top = 500;
+                        insideBar.left = "-30%";
+                        insideBar.top = "25%";
+
                     }
                     break;
                 case KeyboardEventTypes.KEYUP:
@@ -552,7 +568,8 @@ export class BasicScene {
                         t = Math.pow(2, (count * 2));
                         this.scene.actionManager.registerAction(shootAction);
                         count = 0;
-                        advancedTexture.removeControl(power);
+                        advancedTexture.removeControl(insideBar);
+                        powerBar.isVisible = false;
                     }
                     break;
             }
@@ -611,9 +628,15 @@ export class BasicScene {
         return pointCount;
     }
 
+    CreatePowerBar(): Rectangle{
+        let bar = new Rectangle();
+        bar.width = "300px";
+        bar.height = "40px";
+        bar.color = "black";
+        bar.thickness = 4;
 
-
-
+        return bar;
+    }
 
 }
 
