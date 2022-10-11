@@ -461,8 +461,8 @@ export class BasicScene {
 
         let advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
         let powerBar = this.CreatePowerBar();
-        powerBar.left = -1000;
-        powerBar.top = 500;
+        powerBar.left = "-30%";
+        powerBar.top = "25%";
         let insideBar = new Rectangle();
         insideBar.parent = powerBar;
         advancedTexture.addControl(insideBar);
@@ -489,8 +489,8 @@ export class BasicScene {
                         // power.text = count.toString();
 
                         //Placement for visual
-                        insideBar.left = -1000;
-                        insideBar.top = 500;
+                        insideBar.left = "-30%";
+                        insideBar.top = "25%";
 
                     }
                     break;
