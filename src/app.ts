@@ -15,11 +15,20 @@ import {
     ExecuteCodeAction,
     AbstractMesh,
     PredicateCondition,
+    setAndStartTimer,
     KeyboardEventTypes
 } from "@babylonjs/core";
 import "@babylonjs/loaders";
-import { AdvancedDynamicTexture, Image, Control, TextBlock} from "@babylonjs/gui";
+import { AdvancedDynamicTexture, Image, StackPanel, TextBlock, Control } from "@babylonjs/gui";
+
 import * as CANNON from "cannon";
+
+// session timer
+enum Difficulty {
+    EASY = 90,
+    MEDIUM = 60,
+    HARD = 30
+}
 
 /*Declares and exports the BasicScene class, which initializes both the Babylon Scene and the Babylon Engine */
 export class BasicScene {
@@ -31,17 +40,27 @@ export class BasicScene {
     points: number;
     pointCount: TextBlock;
     shootPoint: boolean;
+    private _advancedTexture: AdvancedDynamicTexture;
+
     
+    // timer
+    public time: number = 0;
+    
+
     constructor(){
         const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
         this.engine = new Engine(canvas, true);
         this.scene = this.CreateScene();
         this.camera = this.CreateController();
+        this.CreateTimer(Difficulty.EASY); // TODO: passing a difficulty param
         this.CreateBall().then(ball => {this.ball = ball});
         this.ballIsHeld = false;
         this.points = 0;
         this.pointCount = new TextBlock();
         this.shootPoint = false;
+
+        const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("FullscreenUI");
+        this._advancedTexture = advancedTexture;
 
         this.engine.runRenderLoop(()=>{
             this.scene.render();
@@ -373,8 +392,10 @@ export class BasicScene {
         target.stretch = Image.STRETCH_UNIFORM;
         target.width = "20%"
         target.height = "20%"
+
         const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("FullscreenUI");
         advancedTexture.addControl(target);
+        this._advancedTexture = advancedTexture;
         
         return target;
     }
@@ -394,6 +415,49 @@ export class BasicScene {
             }   
         }
         return isBallOnSight;   
+    }
+    // ---- Timer -----
+    CreateTimer(difficulty: Difficulty): void {
+        console.log("difficulty: " + difficulty);
+        const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("FullscreenUI");
+        
+        const timerUi = new TextBlock();
+        timerUi.name = "timer";
+        timerUi.textHorizontalAlignment = TextBlock.HORIZONTAL_ALIGNMENT_RIGHT;
+        timerUi.paddingRight = "50px";
+        timerUi.top = "20px";
+        timerUi.fontSize = "48px";
+        timerUi.color = "white";
+        timerUi.resizeToFit = true;
+        timerUi.height = "96px";
+        timerUi.width = "220px";
+
+        // set timer text
+        timerUi.text = this.getFormattedTime(difficulty);
+        
+        timerUi.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
+        timerUi.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        timerUi.fontFamily = "Viga";
+        // stackPanel.addControl(timerUi);
+        advancedTexture.addControl(timerUi);
+        this._advancedTexture = advancedTexture;
+
+        let count = difficulty;
+        setInterval(() => {
+            count--;
+            timerUi.text = this.getFormattedTime(count);
+            if (count <= 0) {
+                timerUi.text = "Time is up!";
+                return;
+            }
+        }, 1000);
+    }
+
+    // 90 sec => "1:30"
+    getFormattedTime(seconds: number) : string {
+        const minutes: number = Math.floor(seconds / 60) % 60;
+        const newSeconds: number = Math.floor(seconds) % 60;
+        return minutes.toString() + ":" + ( "00" + newSeconds ).slice( -2 );
     }
 
     /** PickBall method
