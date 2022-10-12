@@ -33,23 +33,22 @@ enum Difficulty {
 export class BasicScene {
     scene: Scene;
     engine: Engine;
-    camera: FreeCamera;
+    player: FreeCamera;
     ball?:AbstractMesh;
     ballIsHeld:boolean;
     points: number;
     pointCount: TextBlock;
     shootPoint: boolean;
+    MAX_DISTANCE_TO_GRAB: number;
     private _advancedTexture: AdvancedDynamicTexture;
-
-    
     // timer
     public time: number = 0;
-    
 
     constructor(){
         const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
         this.engine = new Engine(canvas, true);
         this.scene = this.CreateScene();
+
         this.camera = this.CreateController();
         this.CreateTimer(Difficulty.EASY); // TODO: passing a difficulty param
         this.CreateBall().then(ball => {this.ball = ball});
@@ -57,6 +56,7 @@ export class BasicScene {
         this.points = 0;
         this.pointCount = new TextBlock();
         this.shootPoint = false;
+        this.MAX_DISTANCE_TO_GRAB = 3;
 
         const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("FullscreenUI");
         this._advancedTexture = advancedTexture;
@@ -111,9 +111,10 @@ export class BasicScene {
 
         //Grabbing indicator
         const target = this.CreateIndicator(); 
-
+        const aimPoint = this.CreatePointer();
         let screenUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
-
+        screenUI.addControl(target);
+        screenUI.addControl(aimPoint);
         //Creates UI element for points
         let pointCount = new TextBlock();
         pointCount.name = "points count";
@@ -246,7 +247,7 @@ export class BasicScene {
             this.scene
         );
     
-        ball.actionManager = new ActionManager(this.scene);
+        // ball.actionManager = new ActionManager(this.scene);
     
         return ball;
     
@@ -395,6 +396,7 @@ export class BasicScene {
         const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("FullscreenUI");
         advancedTexture.addControl(target);
         this._advancedTexture = advancedTexture;
+
         
         return target;
     }
@@ -406,10 +408,11 @@ export class BasicScene {
      */
     BallCheck(): boolean{
         let isBallOnSight = false;
-        const rayCast = this.camera.getForwardRay();
-        if(this.ball){
+        const rayCast = this.player.getForwardRay();
+        if(this.ball && this.player){
+            let distance = Vector3.Distance(this.ball.absolutePosition, this.player.globalPosition);
             const ballIsSeen = (rayCast.intersectsMesh(this.ball));
-            if (ballIsSeen.pickedMesh?.id === "basketball"){
+            if (ballIsSeen.pickedMesh?.id === "basketball" && distance < this.MAX_DISTANCE_TO_GRAB){
                 isBallOnSight = true;
             }   
         }
@@ -472,9 +475,10 @@ export class BasicScene {
             //attaches ball mesh to camera
             this.ball.physicsImpostor?.dispose();
             this.ball.physicsImpostor = null;
-            this.ball.setParent(this.camera);
+            this.ball.setParent(this.player);
             this.ball.position.y = 0;
-            this.ball.position.z = 3;
+            this.ball.position.z = 2.5;
+            this.ball.position.x = 0;
             
             this.ThrowBall();
 
@@ -506,7 +510,7 @@ export class BasicScene {
                     );
                     //Sends the ball in the camera's facing direction. Throw not powerful enough yet, must tweak.
                     //Gets a forward vector from the camera, and adds it to an up vector.
-                    const forwardVector = this.camera.getDirection(Vector3.Forward());
+                    const forwardVector = this.player.getDirection(Vector3.Forward());
                     const upVector = new Vector3(0,5,0);
                     forwardVector.scaleInPlace(t);
                     //console.log(this.ballIsHeld);
@@ -626,6 +630,16 @@ export class BasicScene {
     updatePoints(pointCount: TextBlock): TextBlock{
         pointCount.text = "Points: " + this.points;
         return pointCount;
+    }
+
+
+    CreatePointer(): TextBlock{
+        let target = new TextBlock();
+        target.fontSize = 100;
+        target.color = "white";
+        target.text = "○";
+        
+        return target;
     }
 
     CreatePowerBar(): Rectangle{
