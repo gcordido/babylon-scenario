@@ -15,11 +15,19 @@ import {
     ExecuteCodeAction,
     AbstractMesh,
     PredicateCondition,
-    KeyboardEventTypes,
+    setAndStartTimer,
+    KeyboardEventTypes
 } from "@babylonjs/core";
 import "@babylonjs/loaders";
-import { AdvancedDynamicTexture, Image, Control, TextBlock} from "@babylonjs/gui";
+import { AdvancedDynamicTexture, Image, StackPanel, TextBlock, Control, Rectangle } from "@babylonjs/gui";
 import * as CANNON from "cannon";
+
+// session timer
+enum Difficulty {
+    EASY = 90,
+    MEDIUM = 60,
+    HARD = 30
+}
 
 /*Declares and exports the BasicScene class, which initializes both the Babylon Scene and the Babylon Engine */
 export class BasicScene {
@@ -32,18 +40,26 @@ export class BasicScene {
     pointCount: TextBlock;
     shootPoint: boolean;
     MAX_DISTANCE_TO_GRAB: number;
-    
+    private _advancedTexture: AdvancedDynamicTexture;
+    // timer
+    public time: number = 0;
+
     constructor(){
         const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
         this.engine = new Engine(canvas, true);
         this.scene = this.CreateScene();
-        this.player = this.CreateController();
+
+        this.camera = this.CreateController();
+        this.CreateTimer(Difficulty.EASY); // TODO: passing a difficulty param
         this.CreateBall().then(ball => {this.ball = ball});
         this.ballIsHeld = false;
         this.points = 0;
         this.pointCount = new TextBlock();
         this.shootPoint = false;
         this.MAX_DISTANCE_TO_GRAB = 3;
+
+        const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("FullscreenUI");
+        this._advancedTexture = advancedTexture;
 
         this.engine.runRenderLoop(()=>{
             this.scene.render();
@@ -376,8 +392,11 @@ export class BasicScene {
         target.stretch = Image.STRETCH_UNIFORM;
         target.width = "20%"
         target.height = "20%"
-        // const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("FullscreenUI");
-        // advancedTexture.addControl(target);
+
+        const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("FullscreenUI");
+        advancedTexture.addControl(target);
+        this._advancedTexture = advancedTexture;
+
         
         return target;
     }
@@ -399,11 +418,55 @@ export class BasicScene {
         }
         return isBallOnSight;   
     }
+    // ---- Timer -----
+    CreateTimer(difficulty: Difficulty): void {
+        console.log("difficulty: " + difficulty);
+        const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("FullscreenUI");
+        
+        const timerUi = new TextBlock();
+        timerUi.name = "timer";
+        timerUi.textHorizontalAlignment = TextBlock.HORIZONTAL_ALIGNMENT_RIGHT;
+        timerUi.paddingRight = "50px";
+        timerUi.top = "20px";
+        timerUi.fontSize = "48px";
+        timerUi.color = "white";
+        timerUi.resizeToFit = true;
+        timerUi.height = "96px";
+        timerUi.width = "220px";
+
+        // set timer text
+        timerUi.text = this.getFormattedTime(difficulty);
+        
+        timerUi.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
+        timerUi.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        timerUi.fontFamily = "Viga";
+        // stackPanel.addControl(timerUi);
+        advancedTexture.addControl(timerUi);
+        this._advancedTexture = advancedTexture;
+
+        let count = difficulty;
+        setInterval(() => {
+            count--;
+            timerUi.text = this.getFormattedTime(count);
+            if (count <= 0) {
+                timerUi.text = "Time is up!";
+                return;
+            }
+        }, 1000);
+    }
+
+    // 90 sec => "1:30"
+    getFormattedTime(seconds: number) : string {
+        const minutes: number = Math.floor(seconds / 60) % 60;
+        const newSeconds: number = Math.floor(seconds) % 60;
+        return minutes.toString() + ":" + ( "00" + newSeconds ).slice( -2 );
+    }
 
     /** PickBall method
      *  - Sets the camera as the ball mesh's parent (attaches) and resets the ball to a visible position in front of the camera
      *  - Disposes the physics impostor to avoid collision errors
-     *  - Detects if a launch key is pressed (" "), and throws the ball forward.
+     *  - Detects if a launch key is pressed (spacebar), and throws the ball forward.
+
      * @returns void
      */
     PickBall(): void{
@@ -465,24 +528,40 @@ export class BasicScene {
         let power = new TextBlock();
 
         let advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
-        const style = advancedTexture.createStyle();
-        style.fontSize = 45;
-        
-        power.style = style;
+        let powerBar = this.CreatePowerBar();
+        powerBar.left = "-30%";
+        powerBar.top = "25%";
+        powerBar.cornerRadius = 40;
+        let insideBar = new Rectangle();
+        insideBar.parent = powerBar;
+        insideBar.cornerRadius = 40;
+        advancedTexture.addControl(insideBar);
+        advancedTexture.addControl(powerBar);
+        powerBar.isVisible = false;
+
+
+
 
         //Keyboard Event Observable for when shooting key is pressed. Starts power gauge until key is released
         this.scene.onKeyboardObservable.add((kbInfo) => {
             switch(kbInfo.type) {
                 case KeyboardEventTypes.KEYDOWN:
                     if(kbInfo.event.key === " " && count < 60 && this.ballIsHeld) {
+                        powerBar.isVisible = true;
                         count += 1;
-                        power.text = count.toString();
-                        power.color = "white";
-                        //WIP: Currently shows the power gauge number rather than the proper visual.
-                        advancedTexture.addControl(power);
+                        let width = count * 5;
+
+                        insideBar.width = width + "px";
+                        insideBar.height = "38px";
+                        insideBar.background = "green";
+                        insideBar.color = "green";
+                        insideBar.thickness = 4;
+                        // power.text = count.toString();
+
                         //Placement for visual
-                        power.left = -1000;
-                        power.top = 500;
+                        insideBar.left = "-30%";
+                        insideBar.top = "25%";
+
                     }
                     break;
                 case KeyboardEventTypes.KEYUP:
@@ -493,7 +572,8 @@ export class BasicScene {
                         t = Math.pow(2, (count * 2));
                         this.scene.actionManager.registerAction(shootAction);
                         count = 0;
-                        advancedTexture.removeControl(power);
+                        advancedTexture.removeControl(insideBar);
+                        powerBar.isVisible = false;
                     }
                     break;
             }
@@ -552,6 +632,7 @@ export class BasicScene {
         return pointCount;
     }
 
+
     CreatePointer(): TextBlock{
         let target = new TextBlock();
         target.fontSize = 100;
@@ -561,7 +642,15 @@ export class BasicScene {
         return target;
     }
 
+    CreatePowerBar(): Rectangle{
+        let bar = new Rectangle();
+        bar.width = "300px";
+        bar.height = "40px";
+        bar.color = "black";
+        bar.thickness = 4;
 
+        return bar;
+    }
 
 }
 
