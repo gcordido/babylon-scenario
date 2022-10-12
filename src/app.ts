@@ -49,7 +49,7 @@ export class BasicScene {
         this.engine = new Engine(canvas, true);
         this.scene = this.CreateScene();
 
-        this.camera = this.CreateController();
+        this.player = this.CreateController();
         this.CreateTimer(Difficulty.EASY); // TODO: passing a difficulty param
         this.CreateBall().then(ball => {this.ball = ball});
         this.ballIsHeld = false;
@@ -119,13 +119,13 @@ export class BasicScene {
         let pointCount = new TextBlock();
         pointCount.name = "points count";
         pointCount.textVerticalAlignment = TextBlock.VERTICAL_ALIGNMENT_CENTER;
-        pointCount.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
+        pointCount.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
         pointCount.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
         pointCount.fontSize = "45px";
         pointCount.color = "white";
         pointCount.text = "Points: 0";
         pointCount.top = "32px";
-        pointCount.left = "-64px";
+        pointCount.left = "64px";
         pointCount.width = "25%";
         pointCount.fontFamily = "Helvetica";
         pointCount.resizeToFit = true;
