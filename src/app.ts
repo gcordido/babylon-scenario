@@ -30,7 +30,7 @@ enum Difficulty {
 }
 
 /*Declares and exports the BasicScene class, which initializes both the Babylon Scene and the Babylon Engine */
-export class BasicScene {
+export class BasketballGame {
     scene: Scene;
     engine: Engine;
     player: FreeCamera;
@@ -51,6 +51,7 @@ export class BasicScene {
 
         this.player = this.CreateController();
         this.CreateTimer(Difficulty.EASY); // TODO: passing a difficulty param
+
         this.CreateBall().then(ball => {this.ball = ball});
         this.ballIsHeld = false;
         this.points = 0;
@@ -105,7 +106,8 @@ export class BasicScene {
             These are modelled around the 3D meshes, similar to colliders.
         - Hoops: Basketball Hoop Meshes
         */
-        this.CreateGround();
+        //this.CreateGround();
+        this.CreateCourt();
         this.CreateHoops();
         this.CreateImpostors();
 
@@ -175,12 +177,12 @@ export class BasicScene {
      * @returns FreeCamera
      */
     CreateController(): FreeCamera {
-        const camera = new FreeCamera("camera", new Vector3(0,1,-6), this.scene);
+        const camera = new FreeCamera("camera", new Vector3(0,2,-6), this.scene);
         camera.attachControl();
         //Camera properties
         camera.applyGravity = true;
         camera.checkCollisions = true;
-        camera.ellipsoid = new Vector3(0.5, 0.5, 0.5);
+        camera.ellipsoid = new Vector3(0.5, 1, 0.5);
         camera.minZ = 1;
         camera.speed = 0.25;
         camera.angularSensibility = 3500;
@@ -189,6 +191,7 @@ export class BasicScene {
         camera.keysLeft.push(65);
         camera.keysDown.push(83);
         camera.keysRight.push(68);
+
     
         return camera;
     }
@@ -202,7 +205,7 @@ export class BasicScene {
             {width:15.24, height:28.65}, 
             this.scene
             );
-    
+        ground.position.y = 0.5;
         ground.material = this.CreateGroundMaterial();
     }
     /* CreateGroundMaterial Method
@@ -260,21 +263,37 @@ export class BasicScene {
         const models = await SceneLoader.ImportMeshAsync(
         "",
         "./models/",
-        "hoop.glb"
+        "basketball-hoop.glb"
         );
         const hoop = models.meshes[0];
         const hoop2 = hoop.clone("hoop2", null, false);
         //Hoop #1 properties
-        hoop.position = new Vector3(0, 0, 12);
-        hoop.scaling.scaleInPlace(0.35);
+        hoop.position = new Vector3(0, 0,3.25);
+        hoop.scaling.scaleInPlace(3);
+        let axis = new Vector3(0,1,0);
+        hoop.rotate(axis, (Math.PI / 2));
+
         
         if(hoop2){
             //Hoop #2 properties and rotation
-            hoop2.position = new Vector3(0,0,-12);
-            hoop2.scaling.scaleInPlace(0.35);
+            hoop2.position = new Vector3(0,0, -3.25);
+            hoop2.scaling.scaleInPlace(3);
             const axis = new Vector3(0,1,0);
-            hoop2.rotate(axis, Math.PI);
+            hoop2.rotate(axis, (-(Math.PI / 2)));
         }
+    }
+
+    async CreateCourt(): Promise<void> {
+        const models = await SceneLoader.ImportMeshAsync(
+        "",
+        "./models/",
+        "city.glb"
+        );
+        const city = models.meshes[0];
+        city.position = new Vector3(0,0,0);
+        city.scaling.scaleInPlace(4);
+        let axis = new Vector3(0,1,0);
+        city.rotate(axis, (Math.PI / 2));
     }
     /** CreateImpostors method
      *  - Creates the necessary physics impostors: Hoops, Ground and Wall ("Limiters")
@@ -334,11 +353,12 @@ export class BasicScene {
 
         //Hoop Board #1
         const boardLimiter = MeshBuilder.CreateBox("board1",
-        {width: 3,
-        height: 2,
-        depth: .25});
-        boardLimiter.position.z = 11.5;
-        boardLimiter.position.y = 4.5;
+        {width: 2.5,
+        height: 1.75,
+        depth: .12});
+        boardLimiter.position.z = 11.65;
+        boardLimiter.position.y = 5.35;
+        boardLimiter.position.x = -0.125;
         boardLimiter.isVisible = false;
 
         boardLimiter.physicsImpostor = new PhysicsImpostor(
@@ -348,32 +368,35 @@ export class BasicScene {
         boardLimiter.checkCollisions = true;
         //Hoop Board #2
         const boardLimiter02 = boardLimiter.clone();
-        boardLimiter02.position.z = -11.5;
+        boardLimiter02.position.z = -11.65;
+        boardLimiter02.position.x = 0.125
 
         //Hoop Pole #1
-        const postLimiter = MeshBuilder.CreateCylinder("cylinder1", {height: 5, diameter: 0.3});
-        postLimiter.position.z = 12;
+        const postLimiter = MeshBuilder.CreateCylinder("cylinder1", {height: 6.5, diameter: 0.3});
+        postLimiter.position.z = 13.25;
         postLimiter.position.x = -0.05;
         postLimiter.position.y = 2;
+        postLimiter.isVisible = false;
 
         postLimiter.physicsImpostor = new PhysicsImpostor(
             postLimiter,
             PhysicsImpostor.CylinderImpostor
             );
 
-        postLimiter.isVisible = false;
+        //postLimiter.isVisible = false;
         postLimiter.checkCollisions = true;
 
         //Hoop Pole #2
         const postLimiter02 = postLimiter.clone();
-        postLimiter02.position.z = -12;
+        postLimiter02.position.z = -13.25;
+        postLimiter02.position.x = 0.05;
         
 
         //Hoop Basket
         const hoopRing = MeshBuilder.CreateTorus("ring", {thickness: 0.05, diameter: 0.75});
-        hoopRing.position.z = 10.95;
-        hoopRing.position.y = 4.07;
-        hoopRing.position.x = -0.05;
+        hoopRing.position.z = 11.14;
+        hoopRing.position.y = 4.84;
+        hoopRing.position.x = -0.08;
         hoopRing.isVisible = false;
 
         hoopRing.physicsImpostor = new PhysicsImpostor(
@@ -382,8 +405,8 @@ export class BasicScene {
         );
 
         const hoopRing02 = hoopRing.clone();
-        hoopRing02.position.z = -10.95;
-        hoopRing02.position.x = 0.04;
+        hoopRing02.position.z = -11.14;
+        hoopRing02.position.x = 0.08;
         
     }
 
@@ -411,6 +434,7 @@ export class BasicScene {
         const rayCast = this.player.getForwardRay();
         if(this.ball && this.player){
             let distance = Vector3.Distance(this.ball.absolutePosition, this.player.globalPosition);
+
             const ballIsSeen = (rayCast.intersectsMesh(this.ball));
             if (ballIsSeen.pickedMesh?.id === "basketball" && distance < this.MAX_DISTANCE_TO_GRAB){
                 isBallOnSight = true;
@@ -590,10 +614,14 @@ export class BasicScene {
         const pointCollider = MeshBuilder.CreateSphere("pointCollider", {diameter: 0.08});
         pointCollider.isVisible = false;
         const pointSphere = MeshBuilder.CreateSphere("pointsHere", {diameter: 0.08});
-        pointSphere.position.z = 10.95;
-        pointSphere.position.y = 4.07;
-        pointSphere.position.x = -0.05;
+        pointSphere.position.z = 11.13;
+        pointSphere.position.y = 4.83;
+        pointSphere.position.x = -0.08;
         pointSphere.isVisible = false;
+
+        const pointSphere2 = pointSphere.clone();
+        pointSphere2.position.z = -11.13;
+        pointSphere2.position.x = 0.08;
 
         //TEST: Testing intersection via Action Trigger
         const pointDetection = new ExecuteCodeAction(
@@ -604,6 +632,33 @@ export class BasicScene {
                 }
             },
             (evt) => {
+                console.log("point detected");
+                //Checks if the ball's trajectory is valid. (Points don't count if the ball is shot from below the ring)
+                if(this.ball){
+                    const linearVelocity = this.ball.physicsImpostor?.getLinearVelocity();
+                    if(linearVelocity && linearVelocity.y < 0) {
+                        this.points += 2;
+                        //Ensures that points are not counted more than once.
+                        this.shootPoint = true;
+                    }
+                } 
+
+            },
+            //Condition to check that points were not already counted.
+            //Fixes a bug where the intersection event is triggered repeatedly.
+            new PredicateCondition(this.scene.actionManager as ActionManager, 
+                () => {return !this.shootPoint}) 
+        );
+
+        const pointDetection_2 = new ExecuteCodeAction(
+            {
+                trigger: ActionManager.OnIntersectionEnterTrigger,
+                parameter: {
+                    mesh: pointSphere2
+                }
+            },
+            (evt) => {
+                console.log("point detected");
                 //Checks if the ball's trajectory is valid. (Points don't count if the ball is shot from below the ring)
                 if(this.ball){
                     const linearVelocity = this.ball.physicsImpostor?.getLinearVelocity();
@@ -623,6 +678,7 @@ export class BasicScene {
         
         pointCollider.actionManager = new ActionManager(this.scene);
         pointCollider.actionManager.registerAction(pointDetection);
+        pointCollider.actionManager.registerAction(pointDetection_2);
 
         if(this.ball) pointCollider.parent = this.ball;
     }
@@ -631,7 +687,6 @@ export class BasicScene {
         pointCount.text = "Points: " + this.points;
         return pointCount;
     }
-
 
     CreatePointer(): TextBlock{
         let target = new TextBlock();
@@ -654,4 +709,4 @@ export class BasicScene {
 
 }
 
-new BasicScene();
+// new BasicScene();
