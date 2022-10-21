@@ -45,6 +45,9 @@ class Game {
                     this._scene.render();
                     break;
                 case State.GAME:
+                    if(this._gameScene.return){
+                        this.goToMainMenu();
+                    }
                     //Condition based on timer to be added here.
                     break;
                 default: break;

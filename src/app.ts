@@ -40,6 +40,8 @@ export class BasketballGame {
     pointCount: TextBlock;
     shootPoint: boolean;
     gameOver: boolean;
+    isPaused: boolean;
+    return: boolean;
     MAX_DISTANCE_TO_GRAB: number;
     private _difficulty : {[index: string]: number} = {
         "EASY": 90,
@@ -50,7 +52,7 @@ export class BasketballGame {
     // timer
     public time: number = 0;
 
-    constructor(choice: any){
+    constructor(choice: string){
         const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
         this.engine = new Engine(canvas, true);
         this.scene = this.CreateScene();
@@ -64,6 +66,8 @@ export class BasketballGame {
         this.pointCount = new TextBlock();
         this.shootPoint = false;
         this.MAX_DISTANCE_TO_GRAB = 4;
+        this.isPaused = false;
+        this.return = false;
 
         const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("FullscreenUI");
         this._advancedTexture = advancedTexture;
@@ -124,15 +128,9 @@ export class BasketballGame {
         screenUI.addControl(target);
         screenUI.addControl(aimPoint);
 
-        const pointContainer = new Rectangle();
+        const pointContainer = this.CreateContainer("100%", "96px", "#FA8320", 4, "#3f3461")
         pointContainer.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
         pointContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-        pointContainer.background = "#3f3461";
-        pointContainer.color = "white";
-        pointContainer.height = "96px";
-        pointContainer.width = "100%";
-        pointContainer.thickness = 4;
-        pointContainer.cornerRadius = 20;
 
         //Creates UI element for points
         let pointCount = new TextBlock();
@@ -154,19 +152,17 @@ export class BasketballGame {
         screenUI.addControl(pointContainer);
         screenUI.addControl(pointCount);
 
-        let unpauseButton = Button.CreateSimpleButton("unpauseButton", "Resume");
-        unpauseButton.width = 0.2;
-        unpauseButton.height = "160px";
+        let unpauseButton = this.CreateButton("unpauseButton", "Resume", 0.2, "160px", "white", "#3f3461");
         unpauseButton.fontSize = 40;
-        unpauseButton.color = "white";
-        unpauseButton.background = "#3f3461";
-        unpauseButton.thickness = 4;
-        unpauseButton.cornerRadius = 20;
         unpauseButton.shadowColor = "#BFABFF";
-        unpauseButton.shadowOffsetX = 5;
-        unpauseButton.shadowOffsetY = 3;
 
-
+        let goBackButton = this.CreateButton("goBackButton", "Back To Main Menu", 0.2, "160px", "white", "#3f3461");
+        goBackButton.fontSize = 40;
+        goBackButton.shadowColor = "BFABFF";
+        goBackButton.onPointerDownObservable.add(() =>{
+            this.scene.detachControl();
+            this.return = true;
+        })
 
         /*Stars the first onPointerDown instance to get into the game.
             - The first click will lock the pointer for the camera to pan around.
@@ -175,11 +171,13 @@ export class BasketballGame {
         this.engine.enterPointerlock();
 
         document.onkeydown = (evt) => {
-            if(evt.keyCode == 27){
+            if(evt.keyCode == 27 && !this.gameOver){
                 this.engine.exitPointerlock();
                 screenUI.addControl(unpauseButton);
+                this.isPaused = true;
 
                 unpauseButton.onPointerDownObservable.add(()=>{
+                    this.isPaused = false;
                     this.engine.enterPointerlock();
                     screenUI.removeControl(unpauseButton);
                 })
@@ -214,6 +212,10 @@ export class BasketballGame {
         scene.onBeforeRenderObservable.add(() => {
             pointCount = this.updatePoints(pointCount);
             this.pointCount = pointCount;
+            if(this.gameOver === true){
+                this.engine.exitPointerlock();
+                screenUI.addControl(goBackButton);
+            }
         })
 
 
@@ -518,12 +520,14 @@ export class BasketballGame {
 
         let count = difficulty;
         setInterval(() => {
-            count--;
-            timerUi.text = this.getFormattedTime(count);
-            if (count <= 0) {
-                timerUi.text = "Time is up!";
-                this.gameOver = true;
-                return;
+            if(!this.isPaused){
+                count--;
+                timerUi.text = this.getFormattedTime(count);
+                if (count <= 0) {
+                    timerUi.text = "Time is up!";
+                    this.gameOver = true;
+                    return;
+                }
             }
         }, 1000);
     }
@@ -754,6 +758,32 @@ export class BasketballGame {
         return bar;
     }
 
-}
+    CreateContainer(width: string, height: string, color: string, thickness: number, bgColor: string): Rectangle{
 
-// new BasicScene();
+        let container = new Rectangle();
+        container.width = width;
+        container.height = height;
+        container.color = color;
+        container.thickness = thickness;
+        container.background = bgColor;
+        container.cornerRadius = 20;
+
+        return container;
+    }
+
+    CreateButton(name: string, text: string, width: number, height: string, color: string, bgColor: string): Button{
+
+        let button = Button.CreateSimpleButton(name, text);
+        button.width = width;
+        button.height = height;
+        button.color = color;
+        button.background = bgColor;
+        button.cornerRadius = 20;
+        button.shadowOffsetX = 5;
+        button.shadowOffsetY = 3;
+        
+        return button;
+
+    }
+
+}
