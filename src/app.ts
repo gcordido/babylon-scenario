@@ -19,7 +19,7 @@ import {
     KeyboardEventTypes
 } from "@babylonjs/core";
 import "@babylonjs/loaders";
-import { AdvancedDynamicTexture, Image, StackPanel, TextBlock, Control, Rectangle } from "@babylonjs/gui";
+import { AdvancedDynamicTexture, Image, StackPanel, TextBlock, Control, Rectangle, Button } from "@babylonjs/gui";
 import * as CANNON from "cannon";
 
 // session timer
@@ -39,25 +39,35 @@ export class BasketballGame {
     points: number;
     pointCount: TextBlock;
     shootPoint: boolean;
+    gameOver: boolean;
+    isPaused: boolean;
+    return: boolean;
     MAX_DISTANCE_TO_GRAB: number;
+    private _difficulty : {[index: string]: number} = {
+        "EASY": 90,
+        "MEDIUM": 60,
+        "HARD": 30
+    }
     private _advancedTexture: AdvancedDynamicTexture;
     // timer
     public time: number = 0;
 
-    constructor(){
+    constructor(choice: string){
         const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
         this.engine = new Engine(canvas, true);
         this.scene = this.CreateScene();
-
         this.player = this.CreateController();
-        this.CreateTimer(Difficulty.EASY); // TODO: passing a difficulty param
+        this.CreateTimer(this._difficulty[choice]); // TODO: passing a difficulty param
 
         this.CreateBall().then(ball => {this.ball = ball});
+        this.gameOver = false;
         this.ballIsHeld = false;
         this.points = 0;
         this.pointCount = new TextBlock();
         this.shootPoint = false;
-        this.MAX_DISTANCE_TO_GRAB = 3;
+        this.MAX_DISTANCE_TO_GRAB = 4;
+        this.isPaused = false;
+        this.return = false;
 
         const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("FullscreenUI");
         this._advancedTexture = advancedTexture;
@@ -117,30 +127,66 @@ export class BasketballGame {
         let screenUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
         screenUI.addControl(target);
         screenUI.addControl(aimPoint);
+
+        const pointContainer = this.CreateContainer("100%", "96px", "#FA8320", 4, "#3f3461")
+        pointContainer.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+        pointContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+
         //Creates UI element for points
         let pointCount = new TextBlock();
         pointCount.name = "points count";
-        pointCount.textVerticalAlignment = TextBlock.VERTICAL_ALIGNMENT_CENTER;
+        //pointCount.textVerticalAlignment = TextBlock.VERTICAL_ALIGNMENT_CENTER;
         pointCount.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
         pointCount.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-        pointCount.fontSize = "45px";
+        pointCount.fontSize = "48px";
         pointCount.color = "white";
         pointCount.text = "Points: 0";
         pointCount.top = "32px";
         pointCount.left = "64px";
         pointCount.width = "25%";
         pointCount.fontFamily = "Helvetica";
+        pointCount.paddingRight = "50px";
+        pointCount.top = "20px";
         pointCount.resizeToFit = true;
         //Adds Points elements to the screen UI
+        screenUI.addControl(pointContainer);
         screenUI.addControl(pointCount);
+
+        let unpauseButton = this.CreateButton("unpauseButton", "Resume", 0.2, "160px", "white", "#3f3461");
+        unpauseButton.fontSize = 40;
+        unpauseButton.shadowColor = "#BFABFF";
+
+        let goBackButton = this.CreateButton("goBackButton", "Back To Main Menu", 0.2, "160px", "white", "#3f3461");
+        goBackButton.fontSize = 40;
+        goBackButton.shadowColor = "BFABFF";
+        goBackButton.onPointerDownObservable.add(() =>{
+            this.scene.detachControl();
+            this.return = true;
+        })
 
         /*Stars the first onPointerDown instance to get into the game.
             - The first click will lock the pointer for the camera to pan around.
             - Then checks if the ball is in front of the camera, a click will grab it.
         */
+        this.engine.enterPointerlock();
+
+        document.onkeydown = (evt) => {
+            if(evt.keyCode == 27 && !this.gameOver){
+                this.engine.exitPointerlock();
+                screenUI.addControl(unpauseButton);
+                this.isPaused = true;
+
+                unpauseButton.onPointerDownObservable.add(()=>{
+                    this.isPaused = false;
+                    this.engine.enterPointerlock();
+                    screenUI.removeControl(unpauseButton);
+                })
+
+            }
+        }
+
         scene.onPointerDown = (evt) => {
-            if(evt.button === 0) this.engine.enterPointerlock();
-            if(evt.button === 1) this.engine.exitPointerlock();
+            // if(evt.button === 1) this.engine.exitPointerlock();
             if(this.BallCheck()){
                 target.isVisible = false;
                 this.ballIsHeld = true;
@@ -166,6 +212,10 @@ export class BasketballGame {
         scene.onBeforeRenderObservable.add(() => {
             pointCount = this.updatePoints(pointCount);
             this.pointCount = pointCount;
+            if(this.gameOver === true){
+                this.engine.exitPointerlock();
+                screenUI.addControl(goBackButton);
+            }
         })
 
 
@@ -308,7 +358,7 @@ export class BasketballGame {
             depth: 28.65
         });
 
-        ground.position.y = -1;
+        ground.position.y = -0.9;
         ground.isVisible = false;
         ground.physicsImpostor = new PhysicsImpostor(
             ground,
@@ -443,7 +493,7 @@ export class BasketballGame {
         return isBallOnSight;   
     }
     // ---- Timer -----
-    CreateTimer(difficulty: Difficulty): void {
+    CreateTimer(difficulty: number): void {
         console.log("difficulty: " + difficulty);
         const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("FullscreenUI");
         
@@ -459,22 +509,25 @@ export class BasketballGame {
         timerUi.width = "220px";
 
         // set timer text
-        timerUi.text = this.getFormattedTime(difficulty);
+        timerUi.text = "Time: " + this.getFormattedTime(difficulty);
         
         timerUi.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
         timerUi.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-        timerUi.fontFamily = "Viga";
+        
         // stackPanel.addControl(timerUi);
         advancedTexture.addControl(timerUi);
         this._advancedTexture = advancedTexture;
 
         let count = difficulty;
         setInterval(() => {
-            count--;
-            timerUi.text = this.getFormattedTime(count);
-            if (count <= 0) {
-                timerUi.text = "Time is up!";
-                return;
+            if(!this.isPaused){
+                count--;
+                timerUi.text = this.getFormattedTime(count);
+                if (count <= 0) {
+                    timerUi.text = "Time is up!";
+                    this.gameOver = true;
+                    return;
+                }
             }
         }, 1000);
     }
@@ -564,8 +617,6 @@ export class BasketballGame {
         powerBar.isVisible = false;
 
 
-
-
         //Keyboard Event Observable for when shooting key is pressed. Starts power gauge until key is released
         this.scene.onKeyboardObservable.add((kbInfo) => {
             switch(kbInfo.type) {
@@ -647,7 +698,7 @@ export class BasketballGame {
             //Condition to check that points were not already counted.
             //Fixes a bug where the intersection event is triggered repeatedly.
             new PredicateCondition(this.scene.actionManager as ActionManager, 
-                () => {return !this.shootPoint}) 
+                () => {return !this.shootPoint && !this.isPaused}) 
         );
 
         const pointDetection_2 = new ExecuteCodeAction(
@@ -673,7 +724,7 @@ export class BasketballGame {
             //Condition to check that points were not already counted.
             //Fixes a bug where the intersection event is triggered repeatedly.
             new PredicateCondition(this.scene.actionManager as ActionManager, 
-                () => {return !this.shootPoint}) 
+                () => {return !this.shootPoint && !this.isPaused}) 
         );
         
         pointCollider.actionManager = new ActionManager(this.scene);
@@ -707,6 +758,32 @@ export class BasketballGame {
         return bar;
     }
 
-}
+    CreateContainer(width: string, height: string, color: string, thickness: number, bgColor: string): Rectangle{
 
-// new BasicScene();
+        let container = new Rectangle();
+        container.width = width;
+        container.height = height;
+        container.color = color;
+        container.thickness = thickness;
+        container.background = bgColor;
+        container.cornerRadius = 20;
+
+        return container;
+    }
+
+    CreateButton(name: string, text: string, width: number, height: string, color: string, bgColor: string): Button{
+
+        let button = Button.CreateSimpleButton(name, text);
+        button.width = width;
+        button.height = height;
+        button.color = color;
+        button.background = bgColor;
+        button.cornerRadius = 20;
+        button.shadowOffsetX = 5;
+        button.shadowOffsetY = 3;
+        
+        return button;
+
+    }
+
+}
