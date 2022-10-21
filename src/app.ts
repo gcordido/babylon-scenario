@@ -19,7 +19,7 @@ import {
     KeyboardEventTypes
 } from "@babylonjs/core";
 import "@babylonjs/loaders";
-import { AdvancedDynamicTexture, Image, StackPanel, TextBlock, Control, Rectangle } from "@babylonjs/gui";
+import { AdvancedDynamicTexture, Image, StackPanel, TextBlock, Control, Rectangle, Button } from "@babylonjs/gui";
 import * as CANNON from "cannon";
 
 // session timer
@@ -39,25 +39,31 @@ export class BasketballGame {
     points: number;
     pointCount: TextBlock;
     shootPoint: boolean;
+    gameOver: boolean;
     MAX_DISTANCE_TO_GRAB: number;
+    private _difficulty : {[index: string]: number} = {
+        "EASY": 90,
+        "MEDIUM": 60,
+        "HARD": 30
+    }
     private _advancedTexture: AdvancedDynamicTexture;
     // timer
     public time: number = 0;
 
-    constructor(){
+    constructor(choice: any){
         const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
         this.engine = new Engine(canvas, true);
         this.scene = this.CreateScene();
-
         this.player = this.CreateController();
-        this.CreateTimer(Difficulty.EASY); // TODO: passing a difficulty param
+        this.CreateTimer(this._difficulty[choice]); // TODO: passing a difficulty param
 
         this.CreateBall().then(ball => {this.ball = ball});
+        this.gameOver = false;
         this.ballIsHeld = false;
         this.points = 0;
         this.pointCount = new TextBlock();
         this.shootPoint = false;
-        this.MAX_DISTANCE_TO_GRAB = 3;
+        this.MAX_DISTANCE_TO_GRAB = 4;
 
         const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("FullscreenUI");
         this._advancedTexture = advancedTexture;
@@ -117,30 +123,72 @@ export class BasketballGame {
         let screenUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
         screenUI.addControl(target);
         screenUI.addControl(aimPoint);
+
+        const pointContainer = new Rectangle();
+        pointContainer.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+        pointContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        pointContainer.background = "#3f3461";
+        pointContainer.color = "white";
+        pointContainer.height = "96px";
+        pointContainer.width = "100%";
+        pointContainer.thickness = 4;
+        pointContainer.cornerRadius = 20;
+
         //Creates UI element for points
         let pointCount = new TextBlock();
         pointCount.name = "points count";
-        pointCount.textVerticalAlignment = TextBlock.VERTICAL_ALIGNMENT_CENTER;
+        //pointCount.textVerticalAlignment = TextBlock.VERTICAL_ALIGNMENT_CENTER;
         pointCount.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
         pointCount.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-        pointCount.fontSize = "45px";
+        pointCount.fontSize = "48px";
         pointCount.color = "white";
         pointCount.text = "Points: 0";
         pointCount.top = "32px";
         pointCount.left = "64px";
         pointCount.width = "25%";
         pointCount.fontFamily = "Helvetica";
+        pointCount.paddingRight = "50px";
+        pointCount.top = "20px";
         pointCount.resizeToFit = true;
         //Adds Points elements to the screen UI
+        screenUI.addControl(pointContainer);
         screenUI.addControl(pointCount);
+
+        let unpauseButton = Button.CreateSimpleButton("unpauseButton", "Resume");
+        unpauseButton.width = 0.2;
+        unpauseButton.height = "160px";
+        unpauseButton.fontSize = 40;
+        unpauseButton.color = "white";
+        unpauseButton.background = "#3f3461";
+        unpauseButton.thickness = 4;
+        unpauseButton.cornerRadius = 20;
+        unpauseButton.shadowColor = "#BFABFF";
+        unpauseButton.shadowOffsetX = 5;
+        unpauseButton.shadowOffsetY = 3;
+
+
 
         /*Stars the first onPointerDown instance to get into the game.
             - The first click will lock the pointer for the camera to pan around.
             - Then checks if the ball is in front of the camera, a click will grab it.
         */
+        this.engine.enterPointerlock();
+
+        document.onkeydown = (evt) => {
+            if(evt.keyCode == 27){
+                this.engine.exitPointerlock();
+                screenUI.addControl(unpauseButton);
+
+                unpauseButton.onPointerDownObservable.add(()=>{
+                    this.engine.enterPointerlock();
+                    screenUI.removeControl(unpauseButton);
+                })
+
+            }
+        }
+
         scene.onPointerDown = (evt) => {
-            if(evt.button === 0) this.engine.enterPointerlock();
-            if(evt.button === 1) this.engine.exitPointerlock();
+            // if(evt.button === 1) this.engine.exitPointerlock();
             if(this.BallCheck()){
                 target.isVisible = false;
                 this.ballIsHeld = true;
@@ -308,7 +356,7 @@ export class BasketballGame {
             depth: 28.65
         });
 
-        ground.position.y = -1;
+        ground.position.y = -0.9;
         ground.isVisible = false;
         ground.physicsImpostor = new PhysicsImpostor(
             ground,
@@ -443,7 +491,7 @@ export class BasketballGame {
         return isBallOnSight;   
     }
     // ---- Timer -----
-    CreateTimer(difficulty: Difficulty): void {
+    CreateTimer(difficulty: number): void {
         console.log("difficulty: " + difficulty);
         const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("FullscreenUI");
         
@@ -459,11 +507,11 @@ export class BasketballGame {
         timerUi.width = "220px";
 
         // set timer text
-        timerUi.text = this.getFormattedTime(difficulty);
+        timerUi.text = "Time: " + this.getFormattedTime(difficulty);
         
         timerUi.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
         timerUi.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-        timerUi.fontFamily = "Viga";
+        
         // stackPanel.addControl(timerUi);
         advancedTexture.addControl(timerUi);
         this._advancedTexture = advancedTexture;
@@ -474,6 +522,7 @@ export class BasketballGame {
             timerUi.text = this.getFormattedTime(count);
             if (count <= 0) {
                 timerUi.text = "Time is up!";
+                this.gameOver = true;
                 return;
             }
         }, 1000);
@@ -562,8 +611,6 @@ export class BasketballGame {
         advancedTexture.addControl(insideBar);
         advancedTexture.addControl(powerBar);
         powerBar.isVisible = false;
-
-
 
 
         //Keyboard Event Observable for when shooting key is pressed. Starts power gauge until key is released

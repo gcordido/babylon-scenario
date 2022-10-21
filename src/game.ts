@@ -3,14 +3,15 @@ import {
     Scene,
     FreeCamera,
     Vector3,
+    Color3
 } from "@babylonjs/core"
 import{
-    Image, TextBlock, AdvancedDynamicTexture, Button
+    Image, TextBlock, AdvancedDynamicTexture, Button, Rectangle
 } from "@babylonjs/gui"
 import "@babylonjs/loaders"
 import {BasketballGame} from "./app"
 
-enum State { START = 0, INSTRUCTION = 1, GAME = 3}
+enum State { START = 0, INSTRUCTION = 1, DIFFICULTY = 2, GAME = 3}
 
 class Game {
     private _scene: Scene;
@@ -40,9 +41,10 @@ class Game {
                 case State.INSTRUCTION:
                     this._scene.render();
                     break;
+                case State.DIFFICULTY:
+                    this._scene.render();
+                    break;
                 case State.GAME:
-                    // this._scene.render();
-
                     //Condition based on timer to be added here.
                     break;
                 default: break;
@@ -85,7 +87,7 @@ class Game {
         MainMenu.addControl(playButton);
 
         playButton.onPointerUpObservable.add(() => {
-            this.goToGame();
+            this.goToDifficulty();
             scene.detachControl();
         })
 
@@ -116,9 +118,129 @@ class Game {
         this._state = State.START;
     }
 
-    private async goToGame(): Promise<void> {
+    private async goToDifficulty(): Promise<void> {
         this._scene.detachControl();
-        this._gameScene = new BasketballGame();
+
+        let scene = new Scene(this._engine);
+        let camera = new FreeCamera("camera1", new Vector3(0, 5, -10),scene);
+        camera.setTarget(Vector3.Zero());
+
+        const DifficultyMenu = AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene);
+        DifficultyMenu.idealHeight = 1920;
+        //Image link to be changed for direct asset.
+        const backgroundImg = new Image("",  "https://i.imgur.com/noHjjmi.png");
+        backgroundImg.stretch = Image.STRETCH_FILL;
+        DifficultyMenu.addControl(backgroundImg);
+
+        const bgRectangle = new Rectangle();
+        bgRectangle.top = "-40%";
+        bgRectangle.cornerRadius = 20;
+        bgRectangle.height = "175px";
+        bgRectangle.width = "50%";
+        bgRectangle.color = "White";
+        bgRectangle.background = "#3f3461";
+        bgRectangle.thickness = 4;
+        DifficultyMenu.addControl(bgRectangle);
+
+        const difficultyText = new TextBlock();
+        difficultyText.text = "Choose your Difficulty";
+        difficultyText.color = "white";
+        difficultyText.fontWeight = "bold";
+        difficultyText.fontSize = 120;
+        difficultyText.top = "-40%";
+        DifficultyMenu.addControl(difficultyText);
+
+
+        let easyButton = Button.CreateSimpleButton("easyButton", "Easy");
+        easyButton.width = 0.2;
+        easyButton.height = "160px";
+        easyButton.fontSize = 40;
+        easyButton.color = "#FA8320";
+        easyButton.background = "white";
+        easyButton.thickness = 4;
+        easyButton.cornerRadius = 20;
+        easyButton.shadowColor = "#FA8320";
+        easyButton.shadowOffsetX = 5;
+        easyButton.shadowOffsetY = 3;
+        // easyButton.left = ";
+        easyButton.top = "-20%";
+        DifficultyMenu.addControl(easyButton);
+
+        easyButton.onPointerUpObservable.add(() => {
+            this.goToGame("EASY");
+            scene.detachControl();
+        })
+
+        let medButton = Button.CreateSimpleButton("medButton", "Medium");
+        medButton.width = 0.2;
+        medButton.height = "160px";
+        medButton.fontSize = 40;
+        medButton.color = "#FA8320";
+        medButton.background = "white";
+        medButton.thickness = 4;
+        medButton.cornerRadius = 20;
+        medButton.shadowColor = "#FA8320";
+        medButton.shadowOffsetX = 5;
+        medButton.shadowOffsetY = 3;
+        medButton.top = "10%";
+        DifficultyMenu.addControl(medButton);
+
+        medButton.onPointerUpObservable.add(() => {
+            this.goToGame("MEDIUM");
+            scene.detachControl();
+        })
+
+        let hardButton = Button.CreateSimpleButton("hardButton", "Hard");
+        hardButton.width = 0.2;
+        hardButton.height = "160px";
+        hardButton.fontSize = 40;
+        hardButton.color = "#FA8320";
+        hardButton.background = "white";
+        hardButton.thickness = 4;
+        hardButton.cornerRadius = 20;
+        hardButton.shadowColor = "#FA8320";
+        hardButton.shadowOffsetX = 5;
+        hardButton.shadowOffsetY = 3;
+        hardButton.top = "40%";
+        DifficultyMenu.addControl(hardButton);
+
+        hardButton.onPointerUpObservable.add(() => {
+            this.goToGame("HARD");
+            scene.detachControl();
+        });
+
+        let backButton = Button.CreateSimpleButton("backButton", "Back to Main Menu");
+        backButton.width = "10%";
+        backButton.height = "120px";
+        backButton.fontSize = 30;
+        backButton.color = "White";
+        backButton.thickness = 4;
+        backButton.cornerRadius = 20;
+        backButton.shadowColor = "#BFABFF";
+        backButton.shadowOffsetX = 5;
+        backButton.shadowOffsetY = 3;
+        backButton.left = "30%";
+        backButton.top = "40%";
+        backButton.background = "#3f3461";
+        DifficultyMenu.addControl(backButton);
+
+        backButton.onPointerUpObservable.add(() => {
+            this.goToMainMenu();
+            scene.detachControl();
+        })
+
+
+        await scene.whenReadyAsync();
+        this._engine.hideLoadingUI();
+        this._scene.dispose();
+        this._scene = scene;
+        this._state = State.DIFFICULTY;
+
+    }
+
+    private async goToGame(difficulty: string): Promise<void> {
+        this._scene.detachControl();
+        this._gameScene = new BasketballGame(difficulty);
 
         await this._gameScene.scene.whenReadyAsync();
         this._scene.dispose();
@@ -258,7 +380,7 @@ class Game {
         instUI.addControl(playButton);
 
         playButton.onPointerUpObservable.add(() => {
-            this.goToGame();
+            this.goToDifficulty();
         })
 
         await this._instructionScene.whenReadyAsync();
