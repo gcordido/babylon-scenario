@@ -698,7 +698,7 @@ export class BasketballGame {
             //Condition to check that points were not already counted.
             //Fixes a bug where the intersection event is triggered repeatedly.
             new PredicateCondition(this.scene.actionManager as ActionManager, 
-                () => {return !this.shootPoint}) 
+                () => {return !this.shootPoint && !this.isPaused}) 
         );
 
         const pointDetection_2 = new ExecuteCodeAction(
@@ -724,7 +724,7 @@ export class BasketballGame {
             //Condition to check that points were not already counted.
             //Fixes a bug where the intersection event is triggered repeatedly.
             new PredicateCondition(this.scene.actionManager as ActionManager, 
-                () => {return !this.shootPoint}) 
+                () => {return !this.shootPoint && !this.isPaused}) 
         );
         
         pointCollider.actionManager = new ActionManager(this.scene);
