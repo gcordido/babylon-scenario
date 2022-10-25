@@ -122,7 +122,8 @@ export class BasketballGame {
         this.CreateImpostors();
 
         //Grabbing indicator
-        const target = this.CreateIndicator(); 
+        const target = this.CreateIndicator();
+        target.isVisible = false;
         const aimPoint = this.CreatePointer();
         let screenUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
         screenUI.addControl(target);
@@ -156,9 +157,21 @@ export class BasketballGame {
         unpauseButton.fontSize = 40;
         unpauseButton.shadowColor = "#BFABFF";
 
+        let gameOverUI = this.CreateContainer("40%", "200px", "white", 4, "#3f3461");
+        gameOverUI.top = "-20%"
+        let gameOverText = new TextBlock();
+        gameOverText.fontSize = 50;
+        gameOverText.color = "white";
+        gameOverText.top = "-20%";
+
+
         let goBackButton = this.CreateButton("goBackButton", "Back To Main Menu", 0.2, "160px", "white", "#3f3461");
         goBackButton.fontSize = 40;
         goBackButton.shadowColor = "BFABFF";
+        goBackButton.shadowOffsetX = 5;
+        goBackButton.shadowOffsetY = 3;
+        goBackButton.thickness = 4;
+
         goBackButton.onPointerDownObservable.add(() =>{
             this.scene.detachControl();
             this.return = true;
@@ -214,6 +227,10 @@ export class BasketballGame {
             this.pointCount = pointCount;
             if(this.gameOver === true){
                 this.engine.exitPointerlock();
+                gameOverText.text = "Game Over! Your scored " + this.points + " points."
+                this.player.speed = 0;
+                screenUI.addControl(gameOverUI);
+                screenUI.addControl(gameOverText);
                 screenUI.addControl(goBackButton);
             }
         })
