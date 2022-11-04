@@ -15,7 +15,6 @@ import {
     ExecuteCodeAction,
     AbstractMesh,
     PredicateCondition,
-    setAndStartTimer,
     KeyboardEventTypes
 } from "@babylonjs/core";
 import "@babylonjs/loaders";
@@ -43,6 +42,8 @@ export class BasketballGame {
     isPaused: boolean;
     return: boolean;
     MAX_DISTANCE_TO_GRAB: number;
+    //Difficulty map, which is used to match the incoming difficulty setting with a game time duration.
+
     private _difficulty : {[index: string]: number} = {
         "EASY": 90,
         "MEDIUM": 60,
@@ -52,6 +53,7 @@ export class BasketballGame {
     // timer
     public time: number = 0;
 
+    //The class' constructor. It initializes every component of the class to a basic default value, and ensures the scene is rendered.
     constructor(choice: string){
         const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
         this.engine = new Engine(canvas, true);
@@ -88,6 +90,7 @@ export class BasketballGame {
         const scene = new Scene(this.engine);
         scene.actionManager = new ActionManager();
 
+        //Create a hemispheric light for the scene
         const light = new HemisphericLight("light", new Vector3(0,1,0), scene);
         light.intensity = 0.7;
 
@@ -111,16 +114,14 @@ export class BasketballGame {
 
 
         /*Creates the remaining components of the Scene
-        - Ground Component:
+        - Court Component: Imports the court model, as well as the city elements around it.
+        - Hoops: Basketball Hoop Meshes
         - Physic Impostors: Allows for physics interactions between different Meshes.
             These are modelled around the 3D meshes, similar to colliders.
-        - Hoops: Basketball Hoop Meshes
         */
-        //this.CreateGround();
         this.CreateCourt();
         this.CreateHoops();
         this.CreateImpostors();
-
         //Grabbing indicator
         const target = this.CreateIndicator();
         target.isVisible = false;
@@ -135,8 +136,8 @@ export class BasketballGame {
 
         //Creates UI element for points
         let pointCount = new TextBlock();
-        pointCount.name = "points count";
         //pointCount.textVerticalAlignment = TextBlock.VERTICAL_ALIGNMENT_CENTER;
+        pointCount.name = "points count";
         pointCount.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
         pointCount.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
         pointCount.fontSize = "48px";
