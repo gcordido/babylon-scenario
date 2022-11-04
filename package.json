@@ -4,7 +4,7 @@
   "scripts": {
     "start": "sirv ./src public --cors --single --no-clear --port 8000",
     "build": "webpack",
-    "serve": "webpack serve --config ./webpack.config.js"
+    "serve": "webpack serve"
   },
   "devDependencies": {
     "html-webpack-plugin": "^5.5.0",
