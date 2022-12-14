@@ -532,7 +532,6 @@ export class BasketballGame {
         timerUi.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
         timerUi.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
         
-        // stackPanel.addControl(timerUi);
         advancedTexture.addControl(timerUi);
         this._advancedTexture = advancedTexture;
 
@@ -675,7 +674,7 @@ export class BasketballGame {
 
     }
     /**
-     * Point detection function. 
+     * Point detection method. 
      * - Detects when points have been scored (basket has been made).
      * - Determines the amount of points from player position at throwing.
      */
@@ -756,7 +755,11 @@ export class BasketballGame {
         pointCount.text = "Points: " + this.points;
         return pointCount;
     }
-
+    /**
+     * Create Pointer method.
+     * - Creates a pointer for the user, using a TextBlock object.
+     * @returns TextBlock
+     */
     CreatePointer(): TextBlock{
         let target = new TextBlock();
         target.fontSize = 100;
@@ -765,7 +768,11 @@ export class BasketballGame {
         
         return target;
     }
-
+    /**
+     * Power Bar Creation method.
+     * - Creates a the static bar for power gauge to be used during throws, using a Rectangle object.
+     * @returns Rectangle
+     */
     CreatePowerBar(): Rectangle{
         let bar = new Rectangle();
         bar.width = "300px";
@@ -775,7 +782,16 @@ export class BasketballGame {
 
         return bar;
     }
-
+    /**
+     * Container Creation method.
+     * - Creates a Rectangle object to be used as a container or UI element.
+     * @param width 
+     * @param height 
+     * @param color 
+     * @param thickness 
+     * @param bgColor 
+     * @returns Rectangle
+     */
     CreateContainer(width: string, height: string, color: string, thickness: number, bgColor: string): Rectangle{
 
         let container = new Rectangle();
@@ -788,7 +804,17 @@ export class BasketballGame {
 
         return container;
     }
-
+    /**
+     * Button Creation method.
+     * - Creates a Button object.
+     * @param name 
+     * @param text 
+     * @param width 
+     * @param height 
+     * @param color 
+     * @param bgColor 
+     * @returns Button
+     */
     CreateButton(name: string, text: string, width: number, height: string, color: string, bgColor: string): Button{
 
         let button = Button.CreateSimpleButton(name, text);
